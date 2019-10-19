@@ -48,13 +48,13 @@ User Table
 
 
 Question Bank Table 
-1. '/create-question-bank' - it creates a question bank table by making a get request. Scehma - 'question_id INT AUTO_INCREMENT PRIMARY KEY, question TEXT NOT NULL, option1 VARCHAR(8000), option2 VARCHAR(8000), option3 VARCHAR(8000), option4 VARCHAR(8000), subject_id INT NOT NULL, topic_id INT NOT NULL, answer TEXT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,  FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id)'
-2. '/insert-question' - it insert 'question', 'option1', 'option2', 'option3', 'option4', 'subject_id', 'topic_id', 'answer' into question bank table by making POST request.
-3. '/fetch-questions' - fetches all the question from table.
-4. '/fetch-one-question/:id' - fetch one question with question id.
-5. '/fetch-questions-topic/:id' - fetch all question under a topic id.
-6. '/fetch-questions-subject/:id' - fetch all question under a subject id.
-7. '/update-question/:id' - update any field under a particular question in table.
-8. '/delete-question/:id' - delete a particular question with question id.
-9. '/delete-questions-topic/:id' - delete set of questions with a topic id.
-10. '/delete-questions-subject/:id' - delete all question with a particular subjectid.
+1. '/question/create-question-bank' - it creates a question bank table by making a get request. Scehma - 'question_id INT AUTO_INCREMENT PRIMARY KEY, question TEXT NOT NULL, option1 VARCHAR(8000), option2 VARCHAR(8000), option3 VARCHAR(8000), option4 VARCHAR(8000), subject_id INT NOT NULL, topic_id INT NOT NULL, answer TEXT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,  FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id)'
+2. '/question/insert-question' - it insert 'question', 'option1', 'option2', 'option3', 'option4', 'subject_id', 'topic_id', 'answer' into question bank table by making POST request.
+3. '/question/fetch-questions' - fetches all the question from table.
+4. '/question/fetch-one-question/:id' - fetch one question with question id.
+5. '/question/fetch-questions-topic/:id' - fetch all question under a topic id.
+6. '/question/fetch-questions-subject/:id' - fetch all question under a subject id.
+7. '/question/update-question/:id' - update any field under a particular question in table.
+8. '/question/delete-question/:id' - delete a particular question with question id.
+9. '/question/delete-questions-topic/:id' - delete set of questions with a topic id.
+10. '/question/delete-questions-subject/:id' - delete all question with a particular subjectid.

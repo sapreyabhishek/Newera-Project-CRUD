@@ -22,11 +22,19 @@ app.get('/creatdb', (req,res) => {
     })
 })
 
-var indexRoutes = require("./routes/question_bank");
-var userRoutes  = require("./routes/user")
+var questionRoutes = require("./routes/question_bank");
+var userRoutes  = require("./routes/user");
+var indexRoutes = require("./routes/index");
+var lectureRoutes = require("./routes/lecture");
 
+app.use("/question", questionRoutes);
+app.use("/user", userRoutes);
 app.use("/", indexRoutes);
-app.use("/user", userRoutes)
+app.use("/lecture", lectureRoutes);
+
+app.get('/tab', (req,res) => {
+    res.render('tab')
+})
 
 app.listen('3000', () => {
     console.log('Server started at port 3000');

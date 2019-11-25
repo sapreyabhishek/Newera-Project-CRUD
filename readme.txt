@@ -50,11 +50,20 @@ User Table
 Question Bank Table 
 1. '/question/create-question-bank' - it creates a question bank table by making a get request. Scehma - 'question_id INT AUTO_INCREMENT PRIMARY KEY, question TEXT NOT NULL, option1 VARCHAR(8000), option2 VARCHAR(8000), option3 VARCHAR(8000), option4 VARCHAR(8000), subject_id INT NOT NULL, topic_id INT NOT NULL, answer TEXT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,  FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id)'
 2. '/question/insert-question' - it insert 'question', 'option1', 'option2', 'option3', 'option4', 'subject_id', 'topic_id', 'answer' into question bank table by making POST request.
-3. '/question/fetch-questions' - fetches all the question from table.
-4. '/question/fetch-one-question/:id' - fetch one question with question id.
-5. '/question/fetch-questions-topic/:id' - fetch all question under a topic id.
-6. '/question/fetch-questions-subject/:id' - fetch all question under a subject id.
+3. '/question/fetch-questions' - fetches all the question from table by get request.
+4. '/question/fetch-one-question/:id' - fetch one question with question id by get request.
+5. '/question/fetch-questions-topic/:id' - fetch all question under a topic id by get request.
+6. '/question/fetch-questions-subject/:id' - fetch all question under a subject id by get request.
 7. '/question/update-question/:id' - update any field under a particular question in table.
 8. '/question/delete-question/:id' - delete a particular question with question id.
 9. '/question/delete-questions-topic/:id' - delete set of questions with a topic id.
 10. '/question/delete-questions-subject/:id' - delete all question with a particular subjectid.
+
+Comment Table
+1. '/comment/create-comment-table' - it creates a comment table by making a get request. Schema - 'comment_id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, topic_id INT NOT NULL, comment TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (topic_id) REFERENCES topic(topic_id), FOREIGN KEY (user_id) REFERENCES user(user_id)'.
+2. '/comment/insert-comment' - it insert 'user_id', 'comment_id', 'comment'  into comment table by making POST request.
+3. '/comment/fetch-comments' - fetch all comments from commetn table by get request.
+4. '/comment/fetch-comment/:id' - fetch a particular comment using comment id by get request.
+5. '/comment/fetch-comment-by-userid/:id' - fetch set of comments from user_id by get request.
+6. '/comment/fetch-comment-by-topicid/:id' - fetch set of comments from topic_id by get request.
+7. '/comment/

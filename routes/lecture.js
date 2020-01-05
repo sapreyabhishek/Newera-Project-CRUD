@@ -8,7 +8,7 @@ var mysqlConnection = require('../connection')
 
 // create lecture table
 router.get('/create-lecture-table', (req, res) => {
-    let sql = "CREATE TABLE lecture(lecture_id INT AUTO_INCREMENT PRIMARY KEY, subject_id INT NOT NULL, topic_id INT NOT NULL, section TEXT, video_link TEXT, study_material TEXT, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id))"
+    let sql = "CREATE TABLE lecture(lecture_id INT AUTO_INCREMENT PRIMARY KEY, subject_id INT NOT NULL, topic_id INT NOT NULL, section TEXT, video_link TEXT, homework_link VARCHAR(1012), study_material TEXT, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id))"
     mysqlConnection.query(sql, (err, result) => {
     if(err){
         console.log(err);
@@ -24,6 +24,7 @@ router.get('/create-lecture-table', (req, res) => {
     var topic_id  = req.body.topic_id ;
     var section  = req.body.section || null;
     var video_link  = req.body.video_link || null;
+    var homework_link = req.body.homework || null;
     var study_material  = req.body.study_material;
     var description    = req.body.description || null;
     if(!subject_id || !topic_id){
@@ -31,8 +32,8 @@ router.get('/create-lecture-table', (req, res) => {
       res.status(500).send({ error: 'Compulsary filed cannot be empty' })
     }
     else{
-      var value    = [[subject_id, topic_id, section, video_link, study_material, description]];
-      let sql = "INSERT INTO lecture (subject_id, topic_id, section, video_link, study_material, description) VALUES ?"
+      var value    = [[subject_id, topic_id, section, video_link, homework_link, study_material, description]];
+      let sql = "INSERT INTO lecture (subject_id, topic_id, section, video_link, homework_link, study_material, description) VALUES ?"
       mysqlConnection.query(sql, [value] , (err, result) => {
       if(err){
         console.log(err);
@@ -131,6 +132,16 @@ router.get('/create-lecture-table', (req, res) => {
           if(err){
               console.log(err);
               res.status(500).send({ error: 'Error in updating video link of a lecture in a lecture table' })
+          }
+      })
+    }
+
+    if(req.body.homework_link){
+      let sql = "UPDATE lecture SET homework_link="+mysql.escape(req.body.homework_link)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+      mysqlConnection.query(sql, (err, result) => {
+          if(err){
+              console.log(err);
+              res.status(500).send({ error: 'Error in updating homework link of a lecture in a lecture table' })
           }
       })
     }

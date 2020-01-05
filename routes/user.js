@@ -4,7 +4,7 @@ const mysql = require('mysql');
 var mysqlConnection = require('../connection');
 
 router.get('/create-user-table', (req, res) => {
-    let sql = "CREATE TABLE user(user_id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(128) NOT NULL, first_name VARCHAR(128) NOT NULL, last_name VARCHAR(128), city VARCHAR(64), state VARCHAR(64), country VARCHAR(64), address VARCHAR(1000), standard VARCHAR(256), subscription_type VARCHAR(128) , created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+    let sql = "CREATE TABLE user(user_id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(128) NOT NULL, email VARCHAR(512) NOT NULL, first_name VARCHAR(128), last_name VARCHAR(128), city VARCHAR(64), state VARCHAR(64), country VARCHAR(64), address VARCHAR(1000), standard VARCHAR(256), subscription_type VARCHAR(128) , created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)"
     mysqlConnection.query(sql, (err, result) => {
     if(err){
         console.log(err);
@@ -17,6 +17,7 @@ router.get('/create-user-table', (req, res) => {
 router.post('/add-user', (req, res) => {
     var username = req.body.username;
     var first_name= req.body.first_name;
+    var email = req.body.email;
     var last_name = req.body.last_name || null;
     var city = req.body.city || null;
     var state = req.body.state || null;
@@ -30,8 +31,8 @@ router.post('/add-user', (req, res) => {
         res.status(500).send({ error: 'Compulsary filed cannot be empty' })
     }
     else{
-        var value    = [[username, first_name, last_name, city, state, country, address, standard, subscription_type]];
-        let sql = "INSERT INTO user(username, first_name, last_name, city, state, country, address, standard, subscription_type) VALUES ?"
+        var value    = [[username, email, first_name, last_name, city, state, country, address, standard, subscription_type]];
+        let sql = "INSERT INTO user(username, email, first_name, last_name, city, state, country, address, standard, subscription_type) VALUES ?"
         mysqlConnection.query(sql, [value] , (err, result) => {
         if(err){
             console.log(err);
@@ -68,12 +69,22 @@ router.get('/fetch-users', (req, res) => {
 
 // update a particular user from the user table
 router.put('/update-user/:id', function(req, res) {
+
     if(req.body.username){
         let sql = "UPDATE user SET username="+mysql.escape(req.body.username)+" WHERE user_id=" + mysql.escape(req.params.id);
         mysqlConnection.query(sql, (err, result) => {
             if(err){
                 console.log(err);
                 res.status(500).send({ error: 'Error in updating username into user table' })
+            }
+        })
+    }
+    if(req.body.email){
+        let sql = "UPDATE user SET email="+mysql.escape(req.body.email)+" WHERE user_id=" + mysql.escape(req.params.id);
+        mysqlConnection.query(sql, (err, result) => {
+            if(err){
+                console.log(err);
+                res.status(500).send({ error: 'Error in updating email into user table' })
             }
         })
     }

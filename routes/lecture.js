@@ -183,141 +183,267 @@ router.delete('/delete-lecture/:id', function(req, res, next) {
   });
   
   // delete all lectures from the lecture table of a particular topic
-  router.delete('/delete-lecture-topic/:id', function(req, res, next) {
-    var id = req.params.id;
-    var sql = "DELETE FROM lecture WHERE topic_id=" + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, result) {
-      if(err){
+router.delete('/delete-lecture-topic/:id', function(req, res, next) {
+  var id = req.params.id;
+  var sql = "DELETE FROM lecture WHERE topic_id=" + mysql.escape(id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in deleting a  lecture using topic id' })
+    }
+    res.send(result);
+  })
+});
+
+// delete all lectures from the lecture table of a particular subject
+router.delete('/delete-lectures-subject/:id', function(req, res, next) {
+  var id = req.params.id;
+  var sql = "DELETE FROM lecture WHERE subject_id=" + mysql.escape(id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in deleting a  lecture using subject id' })
+    }
+    res.send(result);
+  })
+});
+
+
+// Like
+// Create Like table for lecture
+router.get('/create-like-table', (req, res) =>{
+  let sql = "CREATE TABLE like_table(lecture_id INT, user_id INT, like_lecture BOOLEAN DEFAULT FALSE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (lecture_id) REFERENCES lecture(lecture_id), FOREIGN KEY (user_id) REFERENCES user(user_id))"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
         console.log(err);
-        res.status(500).send({ error: 'Error in deleting a  lecture using topic id' })
-      }
-      res.send(result);
-    })
-  });
-  
-  // delete all lectures from the lecture table of a particular subject
-  router.delete('/delete-lectures-subject/:id', function(req, res, next) {
-    var id = req.params.id;
-    var sql = "DELETE FROM lecture WHERE subject_id=" + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, result) {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in deleting a  lecture using subject id' })
-      }
-      res.send(result);
-    })
-  });
-
-
-  // Like
-  // Create Like table for lecture
-  router.get('/create-like-table', (req, res) =>{
-    let sql = "CREATE TABLE like_table(lecture_id INT, user_id INT, like_lecture BOOLEAN DEFAULT FALSE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (lecture_id) REFERENCES lecture(lecture_id), FOREIGN KEY (user_id) REFERENCES user(user_id))"
-    mysqlConnection.query(sql, (err, result) => {
-      if(err){
-          console.log(err);
-          res.status(500).send({ error: 'Error in creating like table' })
-      }
-      else{
-        res.send({success : result});
-      }
-      
-    });
-  });
-
-  router.post('/insert-like-lecture', (req, res)=>{
-    var user_id = req.body.user_id;
-    var lecture_id = req.body.lecture_id;
-    var like_lecture = req.body.like_lecture;
-    
-    if(!user_id || !lecture_id){
-      console.log("Invalid insert, user id or lecture id field cannot be empty");
-      res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+        res.status(500).send({ error: 'Error in creating like table' })
     }
     else{
-      let sql2 = "SELECT * FROM like_table WHERE user_id="+ mysql.escape(user_id)+" AND lecture_id="+ mysql.escape(lecture_id);
-      mysqlConnection.query(sql2, (err2, result2) => {
-        if(err2){
-          res.status(500).send({ error: err2 })
+      res.send({success : result});
+    }
+    
+  });
+});
+
+router.post('/insert-like-lecture', (req, res)=>{
+  var user_id = req.body.user_id;
+  var lecture_id = req.body.lecture_id;
+  var like_lecture = req.body.like_lecture;
+  
+  if(!user_id || !lecture_id){
+    console.log("Invalid insert, user id or lecture id field cannot be empty");
+    res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+  }
+  else{
+    let sql2 = "SELECT * FROM like_table WHERE user_id="+ mysql.escape(user_id)+" AND lecture_id="+ mysql.escape(lecture_id);
+    mysqlConnection.query(sql2, (err2, result2) => {
+      if(err2){
+        res.status(500).send({ error: err2 })
+      }
+      else{
+        if(result2.length !=0){
+          res.send({error: "This entry is already there"})
         }
         else{
-          if(result2){
-            res.send({error: "This entry is already there"})
-          }
-          else{
-            var value    = [[lecture_id, user_id, true]];
-            let sql = "INSERT INTO like_table(lecture_id, user_id, like_lecture) VALUES ?";
-            mysqlConnection.query(sql, [value] , (err, result) => {
-            if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in inserting lecture into lecture table' })
-            }
-            else{
-              res.send(result);
-            }
-            });
-          }
-        }
-      })
-    }
-  });
-
-  // Fetch a particular user from like table
-  router.get('/fetch-like-lecture/:id', function(req, res) {
-    var user_id = req.params.id;
-    var sql = "SELECT * FROM like_table WHERE user_id="  + mysql.escape(user_id);
-    mysqlConnection.query(sql, function(err, result) {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in fectching a likes of a user' })
-      }
-      res.send(result);
-    })
-  });
-
-  // Fetch a particular user paticular lecture from like table
-  router.get('/fetch-like-lecture-bylectureid/:user_id/:lecture_id', function(req, res) {
-    var user_id = req.params.user_id;
-    var lecture_id =  req.params.lecture_id;
-    var sql = "SELECT * FROM like_table WHERE user_id="  + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
-    mysqlConnection.query(sql, function(err, result) {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in fectching a likes of a user' })
-      }
-      res.send(result);
-    })
-  });
-  
-  router.post('/update-like-lecture/:user_id/:lecture_id', function(req, res) {
-    if(req.body.like_lecture){
-      let sql = "UPDATE like_table SET like_lecture="+mysql.escape(req.body.like_lecture)+" WHERE lecture_id=" + mysql.escape(req.params.lecture_id) + " AND user_id=" + mysql.escape(req.params.user_id);
-      mysqlConnection.query(sql, (err, result) => {
+          var value    = [[lecture_id, user_id, true]];
+          let sql = "INSERT INTO like_table(lecture_id, user_id, like_lecture) VALUES ?";
+          mysqlConnection.query(sql, [value] , (err, result) => {
           if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating a like in like_lecture table' })
+            console.log(err);
+            res.status(500).send({ error: 'Error in inserting lecture into lecture table' })
           }
           else{
-            res.send({'status': 'success'})
+            res.send(result);
           }
-      })
-    }
-  });
-
-
-    // delete all lectures from the lecture table of a particular subject
-    router.delete('/delete-like-lecture/:user_id/:lecture_id', function(req, res, next) {
-      var user_id = req.params.user_id;
-      var lecture_id = req.params.lecture_id;
-      var sql = "DELETE FROM like_table WHERE user_id=" + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
-      mysqlConnection.query(sql, function(err, result) {
-        if(err){
-          console.log(err);
-          res.status(500).send({ error: 'Error in deleting a like from table' });
+          });
         }
-        res.send(result);
-      })
+      }
+    })
+  }
+});
+
+// Fetch a particular user from like table
+router.get('/fetch-like-lecture/:id', function(req, res) {
+  var user_id = req.params.id;
+  var sql = "SELECT * FROM like_table WHERE user_id="  + mysql.escape(user_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in fectching a likes of a user' })
+    }
+    res.send(result);
+  })
+});
+
+// Fetch a particular user paticular lecture from like table
+router.get('/fetch-like-lecture-bylectureid/:user_id/:lecture_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var lecture_id =  req.params.lecture_id;
+  var sql = "SELECT * FROM like_table WHERE user_id="  + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in fectching a likes of a user' })
+    }
+    res.send(result);
+  })
+});
+
+// Update lecture like table
+router.post('/update-like-lecture/:user_id/:lecture_id', function(req, res) {
+  if(req.body.like_lecture){
+    let sql = "UPDATE like_table SET like_lecture="+mysql.escape(req.body.like_lecture)+" WHERE lecture_id=" + mysql.escape(req.params.lecture_id) + " AND user_id=" + mysql.escape(req.params.user_id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating a like in like_lecture table' })
+        }
+        else{
+          res.send({'status': 'success'})
+        }
+    })
+  }
+});
+
+// delete like from a like table
+router.delete('/delete-like-lecture/:user_id/:lecture_id', function(req, res, next) {
+  var user_id = req.params.user_id;
+  var lecture_id = req.params.lecture_id;
+  var sql = "DELETE FROM like_table WHERE user_id=" + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in deleting a like from table' });
+    }
+    res.send(result);
+  })
+});
+
+
+// Lecture status table
+// Create lecture status table for lecture
+router.get('/create-lecture-status-table', (req, res) =>{
+  let sql = "CREATE TABLE lecture_status(lecture_id INT, user_id INT, completed_lecture BOOLEAN DEFAULT FALSE, time_status INT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (lecture_id) REFERENCES lecture(lecture_id), FOREIGN KEY (user_id) REFERENCES user(user_id))"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        console.log(err);
+        res.status(500).send({ error: 'Error in creating like table' })
+    }
+    else{
+      res.send({success : result});
+    }
+    
+  });
+});
+
+// Insert lecture status table
+router.post('/insert-lecture-status', (req, res)=>{
+  var user_id = req.body.user_id;
+  var lecture_id = req.body.lecture_id;
+  var time_status = req.body.time_status;
+  var completed_lecture = req.body.completed_lecture || false;
+  
+  if(!user_id || !lecture_id){
+    console.log("Invalid insert, user id or lecture id field cannot be empty");
+    res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+  }
+  else{
+    let sql2 = "SELECT * FROM lecture_status WHERE user_id="+ mysql.escape(user_id)+" AND lecture_id="+ mysql.escape(lecture_id);
+    mysqlConnection.query(sql2, (err2, result2) => {
+      if(err2){
+        res.status(500).send({ error: err2 })
+      }
+      else{
+        if(result2.length != 0){
+          res.send({error: "This entry is already there"})
+        }
+        else{
+          var value    = [[lecture_id, user_id, completed_lecture, time_status]];
+          let sql = "INSERT INTO lecture_status(lecture_id, user_id, completed_lecture, time_status) VALUES ?";
+          mysqlConnection.query(sql, [value] , (err, result) => {
+          if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in inserting status into lecture status table' })
+          }
+          else{
+            res.send(result);
+          }
+          });
+        }
+      }
+    })
+  }
+});
+
+// Fetch a particular user from lecture status table
+router.get('/fetch-lecture-status/:id', function(req, res) {
+  var user_id = req.params.id;
+  var sql = "SELECT * FROM lecture_status WHERE user_id="  + mysql.escape(user_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in fectching lecture status of a user' })
+    }
+    res.send(result);
+  })
+});
+
+// Fetch a particular user paticular lecture from lecture status table
+router.get('/fetch-lecture-status-bylectureid/:user_id/:lecture_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var lecture_id =  req.params.lecture_id;
+  var sql = "SELECT * FROM lecture_status WHERE user_id="  + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in fectching lecture status of a particular lecture' })
+    }
+    res.send(result);
+  })
+});
+  
+// updating lecture status table
+router.post('/update-lecture-status/:user_id/:lecture_id', function(req, res) {
+  var flag = 0;
+  if(req.body.completed_lecture){
+    let sql = "UPDATE lecture_status SET completed_lecture="+mysql.escape(req.body.completed_lecture)+" WHERE lecture_id=" + mysql.escape(req.params.lecture_id) + " AND user_id=" + mysql.escape(req.params.user_id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            flag= 1;
+            console.log(err);
+        }
     });
+  }
+  if(req.body.time_status){
+    let sql = "UPDATE lecture_status SET time_status="+mysql.escape(req.body.time_status)+" WHERE lecture_id=" + mysql.escape(req.params.lecture_id) + " AND user_id=" + mysql.escape(req.params.user_id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            flag=1;
+            console.log(err);
+        }
+    })
+  }
+    if(flag==0){
+      res.send({success: "Lecture status updated"});
+    }
+    
+  
+});
+
+// delete lecture status table of a particular user
+router.delete('/delete-lecture-status/:user_id/:lecture_id', function(req, res, next) {
+  var user_id = req.params.user_id;
+  var lecture_id = req.params.lecture_id;
+  var sql = "DELETE FROM lecture_status WHERE user_id=" + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in deleting a like from table' });
+    }
+    res.send(result);
+  })
+});
+
 
 
 

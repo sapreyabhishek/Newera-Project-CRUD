@@ -445,8 +445,55 @@ router.delete('/delete-lecture-status/:user_id/:lecture_id', function(req, res, 
 });
 
 
+// SPecial Get lecture
 
-
+// Fetch a particular user from lecture status table
+router.get('/fetch-lecture-user-complete/:user_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var sql = "SELECT S.lecture_id, S.user_id, S.created_at, S.completed_lecture, S.time_status, LI.like_lecture FROM lecture_status AS S LEFT JOIN like_table AS LI ON LI.lecture_id = S.lecture_id WHERE S.user_id="  + mysql.escape(user_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in joining' })
+    }
+    else{
+      let sql2 = "SELECT * FROM lecture";
+      mysqlConnection.query(sql2, function(err2, result2) {
+        if(err2){
+          console.log(err2);
+          res.status(500).send({ error: 'Error in fectching lectures' })
+        }
+        else{
+          var resultArr = [];
+          
+          result2.forEach(x => {
+            var completed_lecture = null;
+            var time_status       = null;
+            var like_lecture      = null;
+            result.forEach(y => {
+              if(x.lecture_id == y.lecture_id){
+                completed_lecture = y.completed_lecture;
+                time_status       = y.time_status;
+                like_lecture      = y.like_lecture;
+              }
+            });
+            var lecture_id     = x.lecture_id;
+            var subject_id     = x.subject_id;
+            var topic_id       = x.topic_id;
+            var section        = x.section;
+            var video_link     = x.video_link;
+            var homework_link  = x.homework_link;
+            var study_material = x.study_material;
+            var description    = x.description;
+            var objt           = { lecture_id, completed_lecture, time_status, like_lecture, subject_id, topic_id, section, video_link, homework_link, study_material, description}
+            resultArr.push(objt);
+          });
+          res.send(resultArr);
+        }
+      });
+    }
+  });
+});
   
   
   module.exports = router;

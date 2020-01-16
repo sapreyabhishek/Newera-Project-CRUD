@@ -3,7 +3,7 @@ var router = express.Router();
 const mysql = require('mysql');
 var mysqlConnection = require('../connection');
 
-// create question bank table
+// create course table
 router.get('/create-course-table', (req, res) => {
     let sql = "CREATE TABLE course(course_id INT AUTO_INCREMENT PRIMARY KEY, course_name VARCHAR(256) NOT NULL, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)"
     mysqlConnection.query(sql, (err, result) => {
@@ -15,6 +15,8 @@ router.get('/create-course-table', (req, res) => {
       res.send(result);
     })
  });
+
+
 router.get('/create-subject-table', (req, res) => {
     let sql = "CREATE TABLE subject(subject_id INT AUTO_INCREMENT PRIMARY KEY, course_id INT NOT NULL, subject_name VARCHAR(256) NOT NULL, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (course_id) REFERENCES course(course_id))"
     mysqlConnection.query(sql, (err, result) => {
@@ -39,19 +41,59 @@ router.get('/create-topic-table', (req, res) => {
     })
 });
 
+//Alter Tables
+// alter topic table hide and priority
+router.get('/alter-topic-table', (req, res) => {
+  let sql = "ALTER TABLE topic ADD hide BOOLEAN NOT NULL DEFAULT FALSE, ADD priority INT AFTER subject_id"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        console.log(err);
+        res.status(500).send({ error: 'Error in altering topic table' })
+    }
+    res.send(result);
+    })
+});
+
+// alter subject table hide and priority
+router.get('/alter-subject-table', (req, res) => {
+  let sql = "ALTER TABLE subject ADD hide BOOLEAN NOT NULL DEFAULT FALSE, ADD priority INT AFTER description"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        console.log(err);
+        res.status(500).send({ error: 'Error in altering subject table' })
+    }
+    res.send(result);
+    })
+});
+
+// alter course table hide and priority
+router.get('/alter-course-table', (req, res) => {
+  let sql = "ALTER TABLE course ADD hide BOOLEAN NOT NULL DEFAULT FALSE, ADD priority INT AFTER description"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        console.log(err);
+        res.status(500).send({ error: 'Error in altering course table' })
+    }
+    res.send(result);
+    })
+});
+
 
 
  // insert course in the course table by making a post request
  router.post('/insert-course', (req, res) => {
    var course_name  = req.body.course_name;
    var description  = req.body.description || null;
+   var priority     = req.body.priority || null;
+   var hide         = req.body.hide || 0;
+
    if(!course_name){
      console.log("Invalid insert, course name cannot be empty");
      res.status(500).send({ error: 'Compulsary filed cannot be empty' })
    }
    else{
-     var value    = [[course_name, description]];
-     let sql = "INSERT INTO course (course_name, description) VALUES ?"
+     var value    = [[course_name, description, priority, hide]];
+     let sql = "INSERT INTO course (course_name, description, priority, hide) VALUES ?"
      mysqlConnection.query(sql, [value] , (err, result) => {
         if(err) {
             console.log(err);
@@ -68,13 +110,15 @@ router.post('/insert-subject', (req, res) => {
    var subject_name  = req.body.subject_name;
    var course_id = req.body.course_id;
    var description  = req.body.description || null;
+   var priority     = req.body.priority || null;
+   var hide         = req.body.hide || 0;
    if(!subject_name || !course_id){
      console.log("Invalid insert, subject name or course id cannot be empty");
      res.status(500).send({ error: 'Compulsary filed cannot be empty' })
    }
    else{
-     var value    = [[subject_name, course_id, description]];
-     let sql = "INSERT INTO subject (subject_name, course_id, description) VALUES ?"
+     var value    = [[subject_name, course_id, description, priority, hide]];
+     let sql = "INSERT INTO subject (subject_name, course_id, description, priority, hide) VALUES ?"
      mysqlConnection.query(sql, [value] , (err, result) => {
         if(err) {
             console.log(err);
@@ -92,13 +136,15 @@ router.post('/insert-topic', (req, res) => {
     var course_id = req.body.course_id;
     var subject_id = req.body.subject_id;
     var description  = req.body.description || null;
+    var priority     = req.body.priority || null;
+    var hide         = req.body.hide || 0;
     if(!topic_name || !course_id || !subject_id){
       console.log("Invalid insert, subject name or course id or subject id cannot be empty");
       res.status(500).send({ error: 'Compulsary filed cannot be empty' })
     }
     else{
-      var value    = [[topic_name, course_id, subject_id, description]];
-      let sql = "INSERT INTO topic (topic_name, course_id, subject_id, description) VALUES ?"
+      var value    = [[topic_name, course_id, subject_id, description, priority, hide]];
+      let sql = "INSERT INTO topic (topic_name, course_id, subject_id, description, priority, hide) VALUES ?"
       mysqlConnection.query(sql, [value] , (err, result) => {
          if(err) {
              console.log(err);
@@ -112,7 +158,7 @@ router.post('/insert-topic', (req, res) => {
 
 // Fetch the entire table of the courses
 router.get('/fetch-courses', (req, res) => {
-    let sql = "SELECT * FROM course"
+    let sql = "SELECT * FROM course WHERE hide = 0 ORDER BY priority"
     mysqlConnection.query(sql , (err, result) => {
         if(err){
             console.log(err);
@@ -124,7 +170,7 @@ router.get('/fetch-courses', (req, res) => {
 
 // Fetch the entire table of the subject
 router.get('/fetch-subjects', (req, res) => {
-    let sql = "SELECT * FROM subject"
+    let sql = "SELECT * FROM subject WHERE hide = 0 ORDER BY priority"
     mysqlConnection.query(sql , (err, result) => {
         if(err){
             console.log(err);
@@ -136,7 +182,7 @@ router.get('/fetch-subjects', (req, res) => {
 
 // Fetch the entire table of the topics
 router.get('/fetch-topics', (req, res) => {
-    let sql = "SELECT * FROM topic"
+    let sql = "SELECT * FROM topic WHERE hide = 0 ORDER BY priority"
     mysqlConnection.query(sql , (err, result) => {
         if(err){
             console.log(err);
@@ -150,7 +196,7 @@ router.get('/fetch-topics', (req, res) => {
 // Fetch a particular id from the courses
 router.get('/fetch-course/:id', function(req, res) {
     var id = req.params.id;
-    var sql = "SELECT * FROM course WHERE course_id="  + mysql.escape(id);
+    var sql = "SELECT * FROM course WHERE course_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
     mysqlConnection.query(sql, function(err, row, fields) {
       if(err) {
         res.status(500).send({ error: 'Cannot fetch a particular course' })
@@ -162,7 +208,7 @@ router.get('/fetch-course/:id', function(req, res) {
 // Fetch a particular id from the subject table using course id
 router.get('/fetch-subject-by-courseid/:id', function(req, res) {
     var id = req.params.id;
-    var sql = "SELECT * FROM subject WHERE course_id="  + mysql.escape(id);
+    var sql = "SELECT * FROM subject WHERE course_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
     mysqlConnection.query(sql, function(err, row, fields) {
       if(err) {
         res.status(500).send({ error: 'Cannot fetch a particular subject' })
@@ -174,7 +220,7 @@ router.get('/fetch-subject-by-courseid/:id', function(req, res) {
 // Fetch a particular id from the subject table using subject id
 router.get('/fetch-subject-by-subjectid/:id', function(req, res) {
     var id = req.params.id;
-    var sql = "SELECT * FROM subject WHERE subject_id="  + mysql.escape(id);
+    var sql = "SELECT * FROM subject WHERE subject_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
     mysqlConnection.query(sql, function(err, row, fields) {
       if(err) {
         res.status(500).send({ error: 'Cannot fetch a particular subject' })
@@ -186,7 +232,7 @@ router.get('/fetch-subject-by-subjectid/:id', function(req, res) {
 // Fetch a particular id from the topic table using course id
 router.get('/fetch-topic-by-courseid/:id', function(req, res) {
     var id = req.params.id;
-    var sql = "SELECT * FROM topic WHERE course_id="  + mysql.escape(id);
+    var sql = "SELECT * FROM topic WHERE course_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
     mysqlConnection.query(sql, function(err, row, fields) {
       if(err) {
         res.status(500).send({ error: 'Cannot fetch a particular topic' })
@@ -198,7 +244,7 @@ router.get('/fetch-topic-by-courseid/:id', function(req, res) {
 // Fetch a particular id from the topic table using subject id
 router.get('/fetch-topic-by-subjectid/:id', function(req, res) {
     var id = req.params.id;
-    var sql = "SELECT * FROM topic WHERE subject_id="  + mysql.escape(id);
+    var sql = "SELECT * FROM topic WHERE subject_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
     mysqlConnection.query(sql, function(err, row, fields) {
       if(err) {
         res.status(500).send({ error: 'Cannot fetch a particular topic' })
@@ -210,7 +256,7 @@ router.get('/fetch-topic-by-subjectid/:id', function(req, res) {
 // Fetch a particular id from the topic table using topic id
 router.get('/fetch-topic-by-topicid/:id', function(req, res) {
     var id = req.params.id;
-    var sql = "SELECT * FROM topic WHERE topic_id="  + mysql.escape(id);
+    var sql = "SELECT * FROM topic WHERE topic_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
     mysqlConnection.query(sql, function(err, row, fields) {
       if(err) {
         res.status(500).send({ error: 'Cannot fetch a particular topic' })
@@ -236,6 +282,26 @@ router.put('/update-course/:id', function(req, res) {
        if(err) {
            console.log(err);
            res.status(500).send({ error: 'Error in updating description into course table' })
+       }
+    })
+   }
+
+   if(req.body.priority){
+    let sql = "UPDATE course SET priority=" + mysql.escape(req.body.priority) + " WHERE course_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+       if(err) {
+           console.log(err);
+           res.status(500).send({ error: 'Error in updating priority into course table' })
+       }
+    })
+   }
+
+   if(req.body.hide){
+    let sql = "UPDATE course SET hide=" + mysql.escape(req.body.hide) + " WHERE course_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+       if(err) {
+           console.log(err);
+           res.status(500).send({ error: 'Error in updating hide into course table' })
        }
     })
    }
@@ -274,53 +340,93 @@ router.put('/update-subject/:id', function(req, res) {
    })
   }
 
+  if(req.body.priority){
+    let sql = "UPDATE subject SET priority=" + mysql.escape(req.body.priority) + " WHERE subject_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+       if(err) {
+           console.log(err);
+           res.status(500).send({ error: 'Error in updating priority into subject table' })
+       }
+    })
+   }
+
+   if(req.body.hide){
+    let sql = "UPDATE subject SET hide=" + mysql.escape(req.body.hide) + " WHERE subject_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+       if(err) {
+           console.log(err);
+           res.status(500).send({ error: 'Error in updating hide into subject table' })
+       }
+    })
+   }
+
   res.send({success: 'Updating the subject table is successful'});
   });
 
-  // update a particular topic from the subject table
-  router.put('/update-topic/:id', function(req, res) {
-    if(req.body.topic_name){
-      let sql = "UPDATE topic SET topic_name=" + mysql.escape(req.body.topic_name) + " WHERE topic_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-         if(err) {
-             console.log(err);
-             res.status(500).send({ error: 'Error in updating topic name into topic table' })
-         }
-      })
-    }
-
-    if(req.body.subject_id){
-      let sql = "UPDATE topic SET subject_id=" + mysql.escape(req.body.subject_id) + " WHERE topic_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-         if(err) {
-             console.log(err);
-             res.status(500).send({ error: 'Error in updating topic name into topic table' })
-         }
-      })
-    }
-  
-    if(req.body.course_id){
-      let sql = "UPDATE topic SET course_id=" + mysql.escape(req.body.course_id) + " WHERE topic_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-         if(err) {
-             console.log(err);
-             res.status(500).send({ error: 'Error in updating course id into subject table' })
-         }
-      })
-    }
-  
-    if(req.body.description){
-     let sql = "UPDATE topic SET description=" + mysql.escape(req.body.description) + " WHERE topic_id=" + mysql.escape(req.params.id);
-     mysqlConnection.query(sql, (err, result) => {
+// update a particular topic from the subject table
+router.put('/update-topic/:id', function(req, res) {
+  if(req.body.topic_name){
+    let sql = "UPDATE topic SET topic_name=" + mysql.escape(req.body.topic_name) + " WHERE topic_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
         if(err) {
             console.log(err);
-            res.status(500).send({ error: 'Error in updating description into subject table' })
+            res.status(500).send({ error: 'Error in updating topic name into topic table' })
         }
-     })
-    }
+    })
+  }
 
-    res.send({success: 'Updating the topic table is successful'});
-   });
+  if(req.body.subject_id){
+    let sql = "UPDATE topic SET subject_id=" + mysql.escape(req.body.subject_id) + " WHERE topic_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err) {
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating topic name into topic table' })
+        }
+    })
+  }
+
+  if(req.body.course_id){
+    let sql = "UPDATE topic SET course_id=" + mysql.escape(req.body.course_id) + " WHERE topic_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err) {
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating course id into subject table' })
+        }
+    })
+  }
+
+  if(req.body.description){
+    let sql = "UPDATE topic SET description=" + mysql.escape(req.body.description) + " WHERE topic_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+      if(err) {
+          console.log(err);
+          res.status(500).send({ error: 'Error in updating description into subject table' })
+      }
+    })
+  }
+
+  if(req.body.priority){
+    let sql = "UPDATE topic SET priority=" + mysql.escape(req.body.priority) + " WHERE topic_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+      if(err) {
+          console.log(err);
+          res.status(500).send({ error: 'Error in updating priority into subject table' })
+      }
+    })
+  }
+
+  if(req.body.hide){
+    let sql = "UPDATE topic SET hide=" + mysql.escape(req.body.hide) + " WHERE topic_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+      if(err) {
+          console.log(err);
+          res.status(500).send({ error: 'Error in updating hide into subject table' })
+      }
+    })
+  }
+
+  res.send({success: 'Updating the topic table is successful'});
+  });
 
 // delete a particular course from the course table
 router.delete('/delete-course/:id', function(req, res, next) {

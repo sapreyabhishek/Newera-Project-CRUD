@@ -37,7 +37,9 @@ router.get('/create-topic-table', (req, res) => {
       console.log(result);
       res.send(result);
     })
- });
+});
+
+
 
  // insert course in the course table by making a post request
  router.post('/insert-course', (req, res) => {

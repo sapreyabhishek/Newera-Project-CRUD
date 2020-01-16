@@ -17,157 +17,270 @@ router.get('/create-lecture-table', (req, res) => {
     res.send(result);
     })
   });
+
+
+// alter lecture table hide and priority
+router.get('/alter-lecture-table', (req, res) => {
+  let sql = "ALTER TABLE lecture ADD hide BOOLEAN NOT NULL DEFAULT FALSE, ADD priority INT AFTER description"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        console.log(err);
+        res.status(500).send({ error: 'Error in altering lecture table' })
+    }
+    res.send(result);
+    })
+});
   
-  // insert lecture in the lecture table by making a post request
-  router.post('/insert-lecture', (req, res) => {
-    var subject_id  = req.body.subject_id ;
-    var topic_id  = req.body.topic_id ;
-    var section  = req.body.section || null;
-    var video_link  = req.body.video_link || null;
-    var homework_link = req.body.homework || null;
-    var study_material  = req.body.study_material;
-    var description    = req.body.description || null;
-    if(!subject_id || !topic_id){
-      console.log("Invalid insert, subject id or topic id field cannot be empty");
-      res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+// insert lecture in the lecture table by making a post request
+router.post('/insert-lecture', (req, res) => {
+  var subject_id  = req.body.subject_id ;
+  var topic_id  = req.body.topic_id ;
+  var section  = req.body.section || null;
+  var video_link  = req.body.video_link || null;
+  var homework_link = req.body.homework || null;
+  var study_material  = req.body.study_material;
+  var description    = req.body.description || null;
+  var priority = req.body.priority || null;
+  var hide = req.body.hide;
+  if(!subject_id || !topic_id){
+    console.log("Invalid insert, subject id or topic id field cannot be empty");
+    res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+  }
+  else{
+    var value    = [[subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide]];
+    let sql = "INSERT INTO lecture (subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide) VALUES ?"
+    mysqlConnection.query(sql, [value] , (err, result) => {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in inserting lecture into lecture table' })
+    }
+    res.send(result);
+    })
+  }
+  });
+
+// Fetch the entire table of the lectures
+router.get('/fetch-lectures', (req, res) => {
+  let sql = "SELECT * FROM lecture WHERE hide = 0 ORDER BY priority"
+  mysqlConnection.query(sql , (err, result) => {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in fectching  all lectures' })
+    }
+    res.send(result);
+    })
+});
+  
+// Fetch a particular lecture from the lecture table
+router.get('/fetch-lecture/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT * FROM lecture WHERE lecture_id="  + mysql.escape(id);
+  mysqlConnection.query(sql, function(err, row, fields) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in fectching a particular lecture' })
+    }
+    res.send(row);
+  })
+});
+
+// Fetch all lectures from the lecture table with a particular topic
+router.get('/fetch-lecture-topic/:user_id/:topic_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var topic_id = req.params.topic_id;
+  var sql = "SELECT S.lecture_id, S.user_id, S.created_at, S.completed_lecture, S.time_status, LI.like_lecture FROM lecture_status AS S LEFT JOIN like_table AS LI ON LI.lecture_id = S.lecture_id WHERE S.user_id="  + mysql.escape(user_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in joining' })
     }
     else{
-      var value    = [[subject_id, topic_id, section, video_link, homework_link, study_material, description]];
-      let sql = "INSERT INTO lecture (subject_id, topic_id, section, video_link, homework_link, study_material, description) VALUES ?"
-      mysqlConnection.query(sql, [value] , (err, result) => {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in inserting lecture into lecture table' })
-      }
-      res.send(result);
-      })
+      let sql2 = "SELECT * FROM lecture WHERE topic_id="  + mysql.escape(topic_id) + " AND hide=0 ORDER BY priority";
+      mysqlConnection.query(sql2, function(err2, result2) {
+        if(err2){
+          console.log(err2);
+          res.status(500).send({ error: 'Error in fectching lectures' })
+        }
+        else{
+          var resultArr = [];
+          
+          result2.forEach(x => {
+            var completed_lecture = null;
+            var time_status       = null;
+            var like_lecture      = null;
+            result.forEach(y => {
+              if(x.lecture_id == y.lecture_id){
+                completed_lecture = y.completed_lecture;
+                time_status       = y.time_status;
+                like_lecture      = y.like_lecture;
+              }
+            });
+            var lecture_id     = x.lecture_id;
+            var subject_id     = x.subject_id;
+            var topic_id       = x.topic_id;
+            var section        = x.section;
+            var video_link     = x.video_link;
+            var homework_link  = x.homework_link;
+            var study_material = x.study_material;
+            var description    = x.description;
+            var priority       = x.priority;
+            var hide           = x.hide;
+            var objt           = { lecture_id, completed_lecture, time_status, like_lecture, subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide}
+            resultArr.push(objt);
+          });
+          res.send(resultArr);
+        }
+      });
     }
-   });
-  
-  // Fetch the entire table of the lectures
-  router.get('/fetch-lectures', (req, res) => {
-    let sql = "SELECT * FROM lecture"
-    mysqlConnection.query(sql , (err, result) => {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in fectching  all lectures' })
-      }
-      res.send(result);
-      })
-  })
-  
-  // Fetch a particular lecture from the lecture table
-  router.get('/fetch-lecture/:id', function(req, res) {
-    var id = req.params.id;
-    var sql = "SELECT * FROM lecture WHERE lecture_id="  + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in fectching a particular lecture' })
-      }
-      res.send(row);
-    })
   });
   
-  // Fetch all lectures from the lecture table with a particular topic
-  router.get('/fetch-lecture-topic/:id', function(req, res) {
-    var id = req.params.id;
-    var sql = "SELECT * FROM lecture WHERE topic_id="  + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in fectching all lecture from a topic' })
-      }
-      res.send(row);
-    })
+});
+  
+// Fetch all lectures from the lecture table with a particular subject
+router.get('/fetch-lecture-subject/:user_id/:subject_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var subject_id = req.params.subject_id;
+  var sql = "SELECT S.lecture_id, S.user_id, S.created_at, S.completed_lecture, S.time_status, LI.like_lecture FROM lecture_status AS S LEFT JOIN like_table AS LI ON LI.lecture_id = S.lecture_id WHERE S.user_id="  + mysql.escape(user_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in joining' })
+    }
+    else{
+      let sql2 = "SELECT * FROM lecture WHERE subject_id="  + mysql.escape(subject_id) + " AND hide=0 ORDER BY priority";
+      mysqlConnection.query(sql2, function(err2, result2) {
+        if(err2){
+          console.log(err2);
+          res.status(500).send({ error: 'Error in fectching lectures' })
+        }
+        else{
+          var resultArr = [];
+          
+          result2.forEach(x => {
+            var completed_lecture = null;
+            var time_status       = null;
+            var like_lecture      = null;
+            result.forEach(y => {
+              if(x.lecture_id == y.lecture_id){
+                completed_lecture = y.completed_lecture;
+                time_status       = y.time_status;
+                like_lecture      = y.like_lecture;
+              }
+            });
+            var lecture_id     = x.lecture_id;
+            var subject_id     = x.subject_id;
+            var topic_id       = x.topic_id;
+            var section        = x.section;
+            var video_link     = x.video_link;
+            var homework_link  = x.homework_link;
+            var study_material = x.study_material;
+            var description    = x.description;
+            var priority       = x.priority;
+            var hide           = x.hide;
+            var objt           = { lecture_id, completed_lecture, time_status, like_lecture, subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide}
+            resultArr.push(objt);
+          });
+          res.send(resultArr);
+        }
+      });
+    }
   });
   
-  // Fetch all lectures from the lecture table with a particular subject
-  router.get('/fetch-lecture-subject/:id', function(req, res) {
-    var id = req.params.id;
-    var sql = "SELECT * FROM lecture WHERE subject_id="  + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in fectching all lecture from a topic' })
-      }
-      res.send(row);
-    })
-  });
-  
-  router.put('/update-lecture/:id', function(req, res) {
-    if(req.body.subject_id){
-      let sql = "UPDATE lecture SET subject_id="+mysql.escape(req.body.subject_id)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating a lecture in a lecture table' })
-          }
-      })
-    }
-  
-    if(req.body.topic_id){
-      let sql = "UPDATE lecture SET topic_id="+mysql.escape(req.body.topic_id)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating a lecture in a lecture table' })
-          }
-      })
-    }
-  
-    if(req.body.section){
-      let sql = "UPDATE lecture SET section="+mysql.escape(req.body.section)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating section of a lecture in a lecture table' })
-          }
-      })
-    }
-  
-    if(req.body.video_link){
-      let sql = "UPDATE lecture SET video_link="+mysql.escape(req.body.video_link)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating video link of a lecture in a lecture table' })
-          }
-      })
-    }
+});
 
-    if(req.body.homework_link){
-      let sql = "UPDATE lecture SET homework_link="+mysql.escape(req.body.homework_link)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating homework link of a lecture in a lecture table' })
-          }
-      })
-    }
-  
-    if(req.body.description){
-      let sql = "UPDATE lecture SET description="+mysql.escape(req.body.description)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating description of a lecture in a lecture table' })
-          }
-      })
-    }
-  
-    if(req.body.study_material){
-      let sql = "UPDATE lecture SET study_material="+mysql.escape(req.body.study_material)+" WHERE lecture_id=" + mysql.escape(req.params.id);
-      mysqlConnection.query(sql, (err, result) => {
-          if(err){
-              console.log(err);
-              res.status(500).send({ error: 'Error in updating study material of a lecture in a lecture table' })
-          }
-      })
-    }
+router.put('/update-lecture/:id', function(req, res) {
+  if(req.body.subject_id){
+    let sql = "UPDATE lecture SET subject_id="+mysql.escape(req.body.subject_id)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating a lecture in a lecture table' })
+        }
+    })
+  }
 
-    res.send({'status': 'success'})
-  });
+  if(req.body.topic_id){
+    let sql = "UPDATE lecture SET topic_id="+mysql.escape(req.body.topic_id)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.section){
+    let sql = "UPDATE lecture SET section="+mysql.escape(req.body.section)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating section of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.video_link){
+    let sql = "UPDATE lecture SET video_link="+mysql.escape(req.body.video_link)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating video link of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.homework_link){
+    let sql = "UPDATE lecture SET homework_link="+mysql.escape(req.body.homework_link)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating homework link of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.description){
+    let sql = "UPDATE lecture SET description="+mysql.escape(req.body.description)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating description of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.study_material){
+    let sql = "UPDATE lecture SET study_material="+mysql.escape(req.body.study_material)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating study material of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.priority){
+    let sql = "UPDATE lecture SET priority="+mysql.escape(req.body.priority)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating study material of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  if(req.body.hide){
+    let sql = "UPDATE lecture SET hide="+mysql.escape(req.body.hide)+" WHERE lecture_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in updating study material of a lecture in a lecture table' })
+        }
+    })
+  }
+
+  res.send({'status': 'success'})
+});
 
   // delete a particular lecture from the lecture table
 router.delete('/delete-lecture/:id', function(req, res, next) {
@@ -444,56 +557,6 @@ router.delete('/delete-lecture-status/:user_id/:lecture_id', function(req, res, 
   })
 });
 
-
-// SPecial Get lecture
-
-// Fetch a particular user from lecture status table
-router.get('/fetch-lecture-user-complete/:user_id', function(req, res) {
-  var user_id = req.params.user_id;
-  var sql = "SELECT S.lecture_id, S.user_id, S.created_at, S.completed_lecture, S.time_status, LI.like_lecture FROM lecture_status AS S LEFT JOIN like_table AS LI ON LI.lecture_id = S.lecture_id WHERE S.user_id="  + mysql.escape(user_id);
-  mysqlConnection.query(sql, function(err, result) {
-    if(err){
-      console.log(err);
-      res.status(500).send({ error: 'Error in joining' })
-    }
-    else{
-      let sql2 = "SELECT * FROM lecture";
-      mysqlConnection.query(sql2, function(err2, result2) {
-        if(err2){
-          console.log(err2);
-          res.status(500).send({ error: 'Error in fectching lectures' })
-        }
-        else{
-          var resultArr = [];
-          
-          result2.forEach(x => {
-            var completed_lecture = null;
-            var time_status       = null;
-            var like_lecture      = null;
-            result.forEach(y => {
-              if(x.lecture_id == y.lecture_id){
-                completed_lecture = y.completed_lecture;
-                time_status       = y.time_status;
-                like_lecture      = y.like_lecture;
-              }
-            });
-            var lecture_id     = x.lecture_id;
-            var subject_id     = x.subject_id;
-            var topic_id       = x.topic_id;
-            var section        = x.section;
-            var video_link     = x.video_link;
-            var homework_link  = x.homework_link;
-            var study_material = x.study_material;
-            var description    = x.description;
-            var objt           = { lecture_id, completed_lecture, time_status, like_lecture, subject_id, topic_id, section, video_link, homework_link, study_material, description}
-            resultArr.push(objt);
-          });
-          res.send(resultArr);
-        }
-      });
-    }
-  });
-});
   
   
   module.exports = router;

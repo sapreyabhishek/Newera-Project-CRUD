@@ -16,6 +16,18 @@ router.get('/create-course-table', (req, res) => {
     })
  });
 
+ // create subcourse table
+router.get('/create-subcourse-table', (req, res) => {
+  let sql = "CREATE TABLE subcourse(subcourse_id INT AUTO_INCREMENT PRIMARY KEY, course_id INT, subcourse_name TEXT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (course_id) REFERENCES course(course_id))"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err)if(err) {
+      console.log(err);
+      res.status(500).send({ error: 'Error in creating subcourse table in sql' })
+    }
+    console.log(result);
+    res.send(result);
+  })
+});
 
 router.get('/create-subject-table', (req, res) => {
     let sql = "CREATE TABLE subject(subject_id INT AUTO_INCREMENT PRIMARY KEY, course_id INT NOT NULL, subject_name VARCHAR(256) NOT NULL, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (course_id) REFERENCES course(course_id))"
@@ -49,6 +61,18 @@ router.get('/alter-topic-table', (req, res) => {
     if(err){
         console.log(err);
         res.status(500).send({ error: 'Error in altering topic table' })
+    }
+    res.send(result);
+    })
+});
+
+// alter subcourse table hide and priority
+router.get('/alter-subcourse-table', (req, res) => {
+  let sql = "ALTER TABLE subcourse ADD hide BOOLEAN NOT NULL DEFAULT FALSE, ADD priority INT AFTER subcourse_name"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        console.log(err);
+        res.status(500).send({ error: 'Error in altering subcourse table' })
     }
     res.send(result);
     })
@@ -104,6 +128,31 @@ router.get('/alter-course-table', (req, res) => {
      })
    }
   });
+
+   // insert course in the course table by making a post request
+ router.post('/insert-subcourse', (req, res) => {
+  var subcourse_name  = req.body.subcourse_name;
+  var course_id  = req.body.course_id;
+  var priority     = req.body.priority || null;
+  var hide         = req.body.hide || 0;
+
+  if(!course_id){
+    console.log("Invalid insert, course_id cannot be empty");
+    res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+  }
+  else{
+    var value    = [[course_id, subcourse_name, priority, hide]];
+    let sql = "INSERT INTO subcourse (course_id, subcourse_name, priority, hide) VALUES ?"
+    mysqlConnection.query(sql, [value] , (err, result) => {
+       if(err) {
+           console.log(err);
+           res.status(500).send({ error: 'Error in inserting data into table' })
+       }
+      console.log(result);
+      res.send(result);
+    })
+  }
+ });
 
 // insert subject in the subject table by post request
 router.post('/insert-subject', (req, res) => {
@@ -168,6 +217,18 @@ router.get('/fetch-courses', (req, res) => {
       })
   });
 
+// Fetch the entire table of the subcourses
+router.get('/fetch-subcourses', (req, res) => {
+  let sql = "SELECT * FROM subcourse WHERE hide = 0 ORDER BY priority"
+  mysqlConnection.query(sql , (err, result) => {
+      if(err){
+          console.log(err);
+          res.status(500).send({ error: 'Error in fetching data from table' })
+      }
+      res.send(result);
+    })
+});
+
 // Fetch the entire table of the subject
 router.get('/fetch-subjects', (req, res) => {
     let sql = "SELECT * FROM subject WHERE hide = 0 ORDER BY priority"
@@ -203,6 +264,30 @@ router.get('/fetch-course/:id', function(req, res) {
       }
       res.send(row)
     })
+});
+
+// Fetch a particular id from the subcourses
+router.get('/fetch-subcourse/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT * FROM subcourse WHERE course_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
+  mysqlConnection.query(sql, function(err, row, fields) {
+    if(err) {
+      res.status(500).send({ error: 'Cannot fetch a particular subcourse' })
+    }
+    res.send(row)
+  })
+});
+
+// Fetch a particular id from the subcourses
+router.get('/fetch-subcourse-subcourseid/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT * FROM subcourse WHERE subcourse_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
+  mysqlConnection.query(sql, function(err, row, fields) {
+    if(err) {
+      res.status(500).send({ error: 'Cannot fetch a particular subcourse' })
+    }
+    res.send(row)
+  })
 });
 
 // Fetch a particular id from the subject table using course id
@@ -307,6 +392,40 @@ router.put('/update-course/:id', function(req, res) {
    }
    res.send({success: 'Updating the course table is successful'});
   });
+
+// update a particular subcourse from the subcourse table
+router.put('/update-subcourse/:id', function(req, res) {
+  if(req.body.subcourse_name){
+    let sql = "UPDATE subcourse SET subcourse_name=" + mysql.escape(req.body.subcourse_name) + " WHERE subcourse_id=" + mysql.escape(req.params.id);
+    mysqlConnection.query(sql, (err, result) => {
+       if(err) {
+           console.log(err);
+           res.status(500).send({ error: 'Error in updating course name into subcourse table' })
+       }
+    })
+  }
+
+  if(req.body.priority){
+   let sql = "UPDATE subcourse SET priority=" + mysql.escape(req.body.priority) + " WHERE subcourse_id=" + mysql.escape(req.params.id);
+   mysqlConnection.query(sql, (err, result) => {
+      if(err) {
+          console.log(err);
+          res.status(500).send({ error: 'Error in updating priority into subcourse table' })
+      }
+   })
+  }
+
+  if(req.body.hide){
+   let sql = "UPDATE subcourse SET hide=" + mysql.escape(req.body.hide) + " WHERE subcourse_id=" + mysql.escape(req.params.id);
+   mysqlConnection.query(sql, (err, result) => {
+      if(err) {
+          console.log(err);
+          res.status(500).send({ error: 'Error in updating hide into subcourse table' })
+      }
+   })
+  }
+  res.send({success: 'Updating the course table is successful'});
+ });
 
   // update a particular subject from the subject table
 router.put('/update-subject/:id', function(req, res) {
@@ -436,22 +555,48 @@ router.delete('/delete-course/:id', function(req, res, next) {
     if(err) {
       res.status(500).send({ error: 'Error in deleting all topics from a particular course' })
     }
-  }); 
-  var sql2 = "DELETE FROM subject WHERE course_id=" + mysql.escape(id);
-  mysqlConnection.query(sql2, function(err, result) {
-    if(err) {
-      res.status(500).send({ error: 'Error in deleting all subject from a particular course' })
+    else{
+      var sql2 = "DELETE FROM subject WHERE course_id=" + mysql.escape(id);
+      mysqlConnection.query(sql2, function(err2, result) {
+        if(err2) {
+          res.status(500).send({ error: 'Error in deleting all subject from a particular course' })
+        }
+        else{
+          var sql4 = "DELETE FROM subcourse WHERE course_id=" + mysql.escape(id);
+          mysqlConnection.query(sql4, function(err3, result) {
+            if(err3)  {
+              res.status(500).send({ error: 'Error in deleting all subcourses of a particular course' })
+            }
+            else{
+              var sql3 = "DELETE FROM course WHERE course_id=" + mysql.escape(id);
+              mysqlConnection.query(sql3, function(err4, result) {
+                if(err4)  {
+                  console.log(err);
+                  res.status(500).send({ error: 'Error in deleting a course from course table' })
+                }
+                res.send({'status': 'success'})
+              })
+            }
+          });
+        }
+      });
     }
-  })
+  }); 
+});
 
-  var sql3 = "DELETE FROM course WHERE course_id=" + mysql.escape(id);
+// delete a particular subcourse from the subcourse table
+router.delete('/delete-subcourse/:id', function(req, res, next) {
+  var id = req.params.id;
+  var sql3 = "DELETE FROM subcourse WHERE subcourse_id=" + mysql.escape(id);
   mysqlConnection.query(sql3, function(err, result) {
     if(err)  {
       console.log(err);
-      res.status(500).send({ error: 'Error in deleting a course from course table' })
+      res.status(500).send({ error: 'Error in deleting a subcourse from subcourse table' })
     }
-    res.send({'status': 'success'})
-  })
+    else{
+      res.send({'status': 'success'});
+    }
+  });
 });
 
 // delete a particular subject from the subject table
@@ -464,15 +609,21 @@ router.delete('/delete-subject/:id', function(req, res, next) {
       console.log(err);
       res.status(500).send({ error: 'Error in deleting all topics from topic table under current subject' })
     }
-  });
-  var sql2 = "DELETE FROM subject WHERE subject_id=" + mysql.escape(id);
-  mysqlConnection.query(sql2, function(err, result) {
-    if(err)  {
-      console.log(err);
-      res.status(500).send({ error: 'Error in deleting a subject from subject table' })
+    else{
+      var sql2 = "DELETE FROM subject WHERE subject_id=" + mysql.escape(id);
+      mysqlConnection.query(sql2, function(err, result) {
+        if(err)  {
+          console.log(err);
+          res.status(500).send({ error: 'Error in deleting a subject from subject table' })
+        }
+        else{
+          res.send({'status': 'success'})
+        }
+        
+      })
     }
-    res.send({'status': 'success'})
-  })
+  });
+  
 });
 
 // delete a particular topic from the topic table
@@ -483,8 +634,11 @@ router.delete('/delete-topic/:id', function(req, res, next) {
     if(err)  {
       console.log(err);
       res.status(500).send({ error: 'Error in deleting a topic from topic table' })
-  }
-    res.send({'status': 'success'})
+    }
+    else{
+      res.send({'status': 'success'})
+    }
+    
   })
 });
   

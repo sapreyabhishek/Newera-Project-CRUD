@@ -228,6 +228,16 @@ router.get('/fetch-subcourses', (req, res) => {
       res.send(result);
     })
 });
+router.get('/fetch-subject-by-subcourseid/:id', function(req, res) {
+    var id = req.params.id;
+    var sql = "SELECT * FROM subject WHERE subcourse_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
+    mysqlConnection.query(sql, function(err, row, fields) {
+      if(err) {
+        res.status(500).send({ error: 'Cannot fetch a particular subject' })
+      }
+      res.send(row)
+    })
+});
 
 // Fetch the entire table of the subject
 router.get('/fetch-subjects', (req, res) => {

@@ -39,7 +39,7 @@ router.get('/create-subject-table', (req, res) => {
       console.log(result);
       res.send(result);
     })
- });
+});
 
 router.get('/create-topic-table', (req, res) => {
     let sql = "CREATE TABLE topic(topic_id INT AUTO_INCREMENT PRIMARY KEY, topic_name VARCHAR(256) NOT NULL, description TEXT, course_id INT NOT NULL, subject_id INT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (course_id) REFERENCES course(course_id),  FOREIGN KEY (subject_id) REFERENCES subject(subject_id))"
@@ -89,6 +89,8 @@ router.get('/alter-subject-table', (req, res) => {
     res.send(result);
     })
 });
+
+
 
 // alter course table hide and priority
 router.get('/alter-course-table', (req, res) => {
@@ -642,6 +644,186 @@ router.delete('/delete-topic/:id', function(req, res, next) {
   })
 });
   
+
+
+
+
+
+
+// New Updates 
+
+
+// alter subject table subcourse
+router.get('/alter-subject-table-2', (req, res) => {
+  let sql = "ALTER TABLE subject ADD subcourse_id INT AFTER course_id"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        res.status(500).send({ error: err })
+    }
+    else{
+      let sql2 = "ALTER TABLE subject ADD FOREIGN KEY (subcourse_id) REFERENCES subcourse(subcourse_id)"
+      mysqlConnection.query(sql2, (err2, result2) => {
+        if(err2){
+            res.status(500).send({ error: err2 })
+        }
+        res.send(result2);
+      })
+    }
+  })
+});
+
+// Fetch the entire table of the courses WITHOUT HIDE
+router.get('/fetch-courses-without-hide', (req, res) => {
+  let sql = "SELECT * FROM course ORDER BY priority"
+  mysqlConnection.query(sql , (err, result) => {
+      if(err){
+          console.log(err);
+          res.status(500).send({ error: 'Error in fetching data from table' })
+      }
+      res.send(result);
+    })
+});
+
+// Fetch a particular id from the subcourses WITHOUT HIDE
+router.get('/fetch-subcourse-by-courseid-without-hide/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT * FROM subcourse WHERE course_id="  + mysql.escape(id) + " ORDER BY priority";
+  mysqlConnection.query(sql, function(err, row, fields) {
+    if(err) {
+      res.status(500).send({ error: 'Cannot fetch a particular subcourse' })
+    }
+    res.send(row)
+  })
+});
+
+// Fetch a particular id from the subject table using sub course id WITHOUT HIDE
+router.get('/fetch-subject-by-subcourseid-without-hide/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT * FROM subject WHERE subcourse_id="  + mysql.escape(id) + " ORDER BY priority";
+  mysqlConnection.query(sql, function(err, row, fields) {
+    if(err) {
+      res.status(500).send({ error: 'Cannot fetch a particular subject' })
+    }
+    res.send(row)
+  })
+});
+
+// Fetch a particular id from the topic table using subject id WITHOUT HIDE
+router.get('/fetch-topic-by-subjectid-without-hide/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT * FROM topic WHERE subject_id="  + mysql.escape(id) + " ORDER BY priority";
+  mysqlConnection.query(sql, function(err, row, fields) {
+    if(err) {
+      res.status(500).send({ error: 'Cannot fetch a particular topic' })
+    }
+    res.send(row)
+  })
+});
+
+// fetch count of videos in a course of all courses respectively.
+router.get('/fetch-courses-video-count', function(req, res) {
+  var sql = "SELECT course_id, count(*) AS count FROM lecture GROUP BY course_id"
+  mysqlConnection.query(sql, function(err, result) {
+    if(err) {
+      res.status(500).send({ error: err })
+    }
+    else{
+      var sql2 = "SELECT * from course"
+      mysqlConnection.query(sql2, function(err2, result2) {
+        if(err2){
+          res.status(500).send({ error : err2});
+        }
+        else{
+          var ans = [];
+          result2.forEach(x => {
+            var flag = 0;
+            result.forEach(y => {
+              if(x.course_id == y.course_id){
+                ans.push({course_id : x.course_id, course_name : x.course_name, description : x.description, video_count : y.count });
+                flag = 1;
+              }
+            });
+            if(flag == 0){
+              ans.push({course_id : x.course_id , course_name : x.course_name, description : x.description, video_count : 0});
+            }
+          });
+          res.send(ans)
+        }
+      });
+    }
+    
+  });
+});
+
+// fetch count of videos in a sub-course of a particular subcourse id.
+router.get('/fetch-subcourses-video-count-by-courseid/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT subcourse_id, count(*) AS count FROM lecture WHERE course_id = ? GROUP BY subcourse_id "
+  mysqlConnection.query(sql, [id], function(err, result) {
+    if(err) {
+      res.status(500).send({ error: err })
+    }
+    else{
+      var sql2 = "SELECT * from subcourse where course_id = ?"
+      mysqlConnection.query(sql2, [id], function(err2, result2) {
+        if(err2){
+          res.status(500).send({ error : err2});
+        }
+        else{
+          var ans = [];
+          result2.forEach(x => {
+            var flag = 0;
+            result.forEach(y => {
+              if(x.subcourse_id == y.subcourse_id){
+                ans.push({subcourse_id : x.subcourse_id, subcourse_name : x.subcourse_name, video_count : y.count });
+                flag = 1;
+              }
+            });
+            if(flag == 0){
+              ans.push({subcourse_id : x.subcourse_id, subcourse_name : x.subcourse_name, video_count : 0});
+            }
+          });
+          res.send(ans)
+        }
+      });
+    }
+  });
+});
+
+// fetch count of videos in a sub-course of a particular subcourse id.
+router.get('/fetch-subject-video-count-by-subcourseid/:id', function(req, res) {
+  var id = req.params.id;
+  var sql = "SELECT subject_id, count(*) AS count FROM lecture WHERE subcourse_id = ? GROUP BY subject_id "
+  mysqlConnection.query(sql, [id], function(err, result) {
+    if(err) {
+      res.status(500).send({ error: err })
+    }
+    else{
+      var sql2 = "SELECT * from subject where subcourse_id = ?"
+      mysqlConnection.query(sql2, [id], function(err2, result2) {
+        if(err2){
+          res.status(500).send({ error : err2});
+        }
+        else{
+          var ans = [];
+          result2.forEach(x => {
+            var flag = 0;
+            result.forEach(y => {
+              if(x.subject_id == y.subject_id){
+                ans.push({subject_id : x.subject_id, subject_name : x.subject_name, video_count : y.count });
+                flag = 1;
+              }
+            });
+            if(flag == 0){
+              ans.push({subject_id : x.subcourse_id, subject_name : x.subject_name, video_count : 0});
+            }
+          });
+          res.send(ans)
+        }
+      });
+    }
+  });
+});
 
 
 

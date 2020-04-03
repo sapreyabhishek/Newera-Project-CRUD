@@ -8,7 +8,7 @@ var mysqlConnection = require('../connection')
 
 // create lecture table
 router.get('/create-lecture-table', (req, res) => {
-    let sql = "CREATE TABLE lecture(lecture_id INT AUTO_INCREMENT PRIMARY KEY, subject_id INT NOT NULL, topic_id INT NOT NULL, section TEXT, video_link TEXT, homework_link VARCHAR(1012), study_material TEXT, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id))"
+    let sql = "CREATE TABLE lecture(lecture_id INT AUTO_INCREMENT PRIMARY KEY, INT NOT NULL, topic_id INT NOT NULL, section TEXT, video_link TEXT, homework_link VARCHAR(1012), study_material TEXT, description TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (subject_id) REFERENCES subject(subject_id), FOREIGN KEY (topic_id) REFERENCES topic(topic_id))"
     mysqlConnection.query(sql, (err, result) => {
     if(err){
         console.log(err);
@@ -33,6 +33,7 @@ router.get('/alter-lecture-table', (req, res) => {
   
 // insert lecture in the lecture table by making a post request
 router.post('/insert-lecture', (req, res) => {
+  var course_id = req.body.course_id;
   var subject_id  = req.body.subject_id ;
   var topic_id  = req.body.topic_id ;
   var section  = req.body.section || null;
@@ -42,13 +43,13 @@ router.post('/insert-lecture', (req, res) => {
   var description    = req.body.description || null;
   var priority = req.body.priority || null;
   var hide = req.body.hide;
-  if(!subject_id || !topic_id){
-    console.log("Invalid insert, subject id or topic id field cannot be empty");
-    res.status(500).send({ error: 'Compulsary filed cannot be empty' })
+  if(!course_id || !subject_id || !topic_id){
+    console.log("Invalid insert, course id, subject id or topic id field cannot be empty");
+    res.status(500).send({ error: 'Compulsary field cannot be empty' })
   }
   else{
-    var value    = [[subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide]];
-    let sql = "INSERT INTO lecture (subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide) VALUES ?"
+    var value    = [[course_id, subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide]];
+    let sql = "INSERT INTO lecture (course_id, subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide) VALUES ?"
     mysqlConnection.query(sql, [value] , (err, result) => {
     if(err){
       console.log(err);
@@ -70,6 +71,8 @@ router.get('/fetch-lectures', (req, res) => {
     res.send(result);
     })
 });
+
+
   
 // Fetch a particular lecture from the lecture table
 router.get('/fetch-lecture/:id', function(req, res) {
@@ -99,7 +102,7 @@ router.get('/fetch-lecture-topic/:user_id/:topic_id', function(req, res) {
       mysqlConnection.query(sql2, function(err2, result2) {
         if(err2){
           console.log(err2);
-          res.status(500).send({ error: 'Error in fectching lectures' })
+          res.status(500).send({ error: 'Error in fectching lectures' });
         }
         else{
           var resultArr = [];
@@ -556,6 +559,88 @@ router.delete('/delete-lecture-status/:user_id/:lecture_id', function(req, res, 
     res.send(result);
   })
 });
+
+
+
+
+
+
+// New Update 
+
+
+
+// alter lecture table course id
+router.get('/alter-lecture-table-2', (req, res) => {
+  let sql = "ALTER TABLE lecture ADD course_id INT AFTER lecture_id, ADD subcourse_id INT AFTER lecture_id"
+  mysqlConnection.query(sql, (err, result) => {
+    if(err){
+        res.status(500).send({ error: err })
+    }
+    else{
+      let sql2 = "ALTER TABLE lecture ADD FOREIGN KEY (course_id) REFERENCES course(course_id), ADD FOREIGN KEY (subcourse_id) REFERENCES subcourse(subcourse_id)"
+      mysqlConnection.query(sql2, (err2, result2) => {
+        if(err2){
+            res.status(500).send({ error: err2 })
+        }
+        res.send(result2);
+      })
+    }
+  })
+});
+
+// Fetch all lectures from the lecture table with a particular topic WITHOUT HIDE
+router.get('/fetch-lecture-topic-without-hide/:user_id/:topic_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var topic_id = req.params.topic_id;
+  var sql = "SELECT S.lecture_id, S.user_id, S.created_at, S.completed_lecture, S.time_status, LI.like_lecture FROM lecture_status AS S LEFT JOIN like_table AS LI ON LI.lecture_id = S.lecture_id WHERE S.user_id="  + mysql.escape(user_id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      console.log(err);
+      res.status(500).send({ error: 'Error in joining' })
+    }
+    else{
+      let sql2 = "SELECT * FROM lecture WHERE topic_id="  + mysql.escape(topic_id) + " ORDER BY priority";
+      mysqlConnection.query(sql2, function(err2, result2) {
+        if(err2){
+          console.log(err2);
+          res.status(500).send({ error: 'Error in fectching lectures' });
+        }
+        else{
+          var resultArr = [];
+          
+          result2.forEach(x => {
+            var completed_lecture = null;
+            var time_status       = null;
+            var like_lecture      = null;
+            result.forEach(y => {
+              if(x.lecture_id == y.lecture_id){
+                completed_lecture = y.completed_lecture;
+                time_status       = y.time_status;
+                like_lecture      = y.like_lecture;
+              }
+            });
+            var lecture_id     = x.lecture_id;
+            var subject_id     = x.subject_id;
+            var topic_id       = x.topic_id;
+            var section        = x.section;
+            var video_link     = x.video_link;
+            var homework_link  = x.homework_link;
+            var study_material = x.study_material;
+            var description    = x.description;
+            var priority       = x.priority;
+            var hide           = x.hide;
+            var objt           = { lecture_id, completed_lecture, time_status, like_lecture, subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide}
+            resultArr.push(objt);
+          });
+          res.send(resultArr);
+        }
+      });
+    }
+  });
+  
+});
+
+
 
   
   

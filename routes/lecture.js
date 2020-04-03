@@ -589,56 +589,16 @@ router.get('/alter-lecture-table-2', (req, res) => {
 });
 
 // Fetch all lectures from the lecture table with a particular topic WITHOUT HIDE
-router.get('/fetch-lecture-topic-without-hide/:user_id/:topic_id', function(req, res) {
-  var user_id = req.params.user_id;
-  var topic_id = req.params.topic_id;
-  var sql = "SELECT S.lecture_id, S.user_id, S.created_at, S.completed_lecture, S.time_status, LI.like_lecture FROM lecture_status AS S LEFT JOIN like_table AS LI ON LI.lecture_id = S.lecture_id WHERE S.user_id="  + mysql.escape(user_id);
-  mysqlConnection.query(sql, function(err, result) {
-    if(err){
-      console.log(err);
-      res.status(500).send({ error: 'Error in joining' })
-    }
-    else{
-      let sql2 = "SELECT * FROM lecture WHERE topic_id="  + mysql.escape(topic_id) + " ORDER BY priority";
-      mysqlConnection.query(sql2, function(err2, result2) {
-        if(err2){
-          console.log(err2);
-          res.status(500).send({ error: 'Error in fectching lectures' });
+router.get('/fetch-lecture-topic-without-hide/:topic_id', (req, res) => {
+    let sql = "SELECT * FROM lecture"
+    mysqlConnection.query(sql , (err, result) => {
+        if(err){
+            console.log(err);
+            res.status(500).send({ error: 'Error in fetching data from table' })
         }
-        else{
-          var resultArr = [];
-          
-          result2.forEach(x => {
-            var completed_lecture = null;
-            var time_status       = null;
-            var like_lecture      = null;
-            result.forEach(y => {
-              if(x.lecture_id == y.lecture_id){
-                completed_lecture = y.completed_lecture;
-                time_status       = y.time_status;
-                like_lecture      = y.like_lecture;
-              }
-            });
-            var lecture_id     = x.lecture_id;
-            var subject_id     = x.subject_id;
-            var topic_id       = x.topic_id;
-            var section        = x.section;
-            var video_link     = x.video_link;
-            var homework_link  = x.homework_link;
-            var study_material = x.study_material;
-            var description    = x.description;
-            var priority       = x.priority;
-            var hide           = x.hide;
-            var objt           = { lecture_id, completed_lecture, time_status, like_lecture, subject_id, topic_id, section, video_link, homework_link, study_material, description, priority, hide}
-            resultArr.push(objt);
-          });
-          res.send(resultArr);
-        }
-      });
-    }
+        res.send(result);
+      })
   });
-  
-});
 
 
 

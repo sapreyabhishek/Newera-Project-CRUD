@@ -407,6 +407,7 @@ router.put('/update-course/:id', function(req, res) {
 
 // update a particular subcourse from the subcourse table
 router.put('/update-subcourse/:id', function(req, res) {
+  
   if(req.body.subcourse_name){
     let sql = "UPDATE subcourse SET subcourse_name=" + mysql.escape(req.body.subcourse_name) + " WHERE subcourse_id=" + mysql.escape(req.params.id);
     mysqlConnection.query(sql, (err, result) => {

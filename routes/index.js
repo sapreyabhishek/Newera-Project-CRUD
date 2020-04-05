@@ -739,7 +739,7 @@ router.get('/fetch-courses-video-count', function(req, res) {
       res.status(500).send({ error: err })
     }
     else{
-      var sql2 = "SELECT * from course"
+      var sql2 = "SELECT * from course AND hide = 0 ORDER BY priority"
       mysqlConnection.query(sql2, function(err2, result2) {
         if(err2){
           res.status(500).send({ error : err2});
@@ -775,7 +775,7 @@ router.get('/fetch-subcourses-video-count-by-courseid/:id', function(req, res) {
       res.status(500).send({ error: err })
     }
     else{
-      var sql2 = "SELECT * from subcourse where course_id = ?"
+      var sql2 = "SELECT * from subcourse where course_id = ? AND hide = 0 ORDER BY priority"
       mysqlConnection.query(sql2, [id], function(err2, result2) {
         if(err2){
           res.status(500).send({ error : err2});
@@ -810,7 +810,7 @@ router.get('/fetch-subject-video-count-by-subcourseid/:id', function(req, res) {
       res.status(500).send({ error: err })
     }
     else{
-      var sql2 = "SELECT * from subject where subcourse_id = ?"
+      var sql2 = "SELECT * from subject where subcourse_id = ? AND hide = 0 ORDER BY priority"
       mysqlConnection.query(sql2, [id], function(err2, result2) {
         if(err2){
           res.status(500).send({ error : err2});

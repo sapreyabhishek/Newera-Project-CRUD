@@ -802,36 +802,16 @@ router.get('/fetch-subcourses-video-count-by-courseid/:id', function(req, res) {
 });
 
 // fetch count of videos in a sub-course of a particular subcourse id.
-router.get('/fetch-subject-video-count-by-subcourseid/:id', function(req, res) {
-  var id = req.params.id;
-  var sql = "SELECT subject_id, count(*) AS count FROM lecture WHERE subcourse_id = ? GROUP BY subject_id "
-  mysqlConnection.query(sql, [id], function(err, result) {
+router.get('/fetch-subject-video-count-by-subcourseid/:user_id/:subcourse_id', function(req, res) {
+  var subcourse_id = req.params.subcourse_id;
+  var user_id      = req.params.user_id;
+  var sql = "SELECT * FROM (SELECT * FROM subject WHERE subcourse_id = ? ) AS s LEFT JOIN (SELECT subject_id, count(*) AS completed_lecture FROM lecture AS l INNER JOIN (SELECT * FROM lecture_status WHERE user_id = ? AND completed_lecture = 1) AS ls ON l.lecture_id = ls.lecture_id GROUP BY subject_id) AS l ON l.subject_id = s.subject_id LEFT JOIN (SELECT subject_id, count(*) AS count FROM lecture WHERE subcourse_id = ? GROUP BY subject_id) AS e ON e.subject_id = s.subject_id WHERE hide = 0 ORDER BY priority" 
+  mysqlConnection.query(sql, [subcourse_id, user_id, subcourse_id], function(err, result) {
     if(err) {
       res.status(500).send({ error: err })
     }
     else{
-      var sql2 = "SELECT * from subject where subcourse_id = ? AND hide = 0 ORDER BY priority"
-      mysqlConnection.query(sql2, [id], function(err2, result2) {
-        if(err2){
-          res.status(500).send({ error : err2});
-        }
-        else{
-          var ans = [];
-          result2.forEach(x => {
-            var flag = 0;
-            result.forEach(y => {
-              if(x.subject_id == y.subject_id){
-                ans.push({subject_id : x.subject_id, subject_name : x.subject_name, video_count : y.count });
-                flag = 1;
-              }
-            });
-            if(flag == 0){
-              ans.push({subject_id : x.subcourse_id, subject_name : x.subject_name, video_count : 0});
-            }
-          });
-          res.send(ans)
-        }
-      });
+      res.status(200).send(result)
     }
   });
 });

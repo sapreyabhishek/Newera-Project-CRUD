@@ -325,18 +325,13 @@ router.get('/create-lecture-status-table', (req, res) =>{
   });
 });
 
-/*
 // Insert lecture status table
 router.post('/insert-lecture-status', (req, res)=>{
   var user_id = req.body.user_id;
   var lecture_id = req.body.lecture_id;
   var time_status = req.body.time_status;
   var completed_lecture = req.body.completed_lecture || false;
-  */
-  
- router.get('/fetch-lecture-status-bylectid/:user_id/:lecture_id', function(req, res) {
-  var user_id = req.params.user_id;
-  var lecture_id =  req.params.lecture_id;
+ 
   var sql = "SELECT * FROM lecture_status WHERE user_id="  + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
   mysqlConnection.query(sql, function(err, row) {
     if(err){
@@ -349,9 +344,16 @@ router.post('/insert-lecture-status', (req, res)=>{
 		 res.status(500).send({ error: 'row already exits' }) 
 	  }
 	  else{
-		  var time_status = req.body.time_status;
-		  var completed_lecture = req.body.completed_lecture || false;
-		  var value    = [[lecture_id, user_id, completed_lecture, time_status]];
+		   var value    = [[lecture_id, user_id, completed_lecture, time_status]];
+    let sql = "INSERT INTO lecture_status(lecture_id, user_id, completed_lecture, time_status) VALUES ?";
+    mysqlConnection.query(sql, [value] , (err, result) => {
+      if(err){
+        res.status(500).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
+    });
 	  }
     }
   })

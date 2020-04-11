@@ -325,19 +325,41 @@ router.get('/create-lecture-status-table', (req, res) =>{
   });
 });
 
+/*
 // Insert lecture status table
 router.post('/insert-lecture-status', (req, res)=>{
   var user_id = req.body.user_id;
   var lecture_id = req.body.lecture_id;
   var time_status = req.body.time_status;
   var completed_lecture = req.body.completed_lecture || false;
+  */
+  
+ router.get('/fetch-lecture-status-bylectid/:user_id/:lecture_id', function(req, res) {
+  var user_id = req.params.user_id;
+  var lecture_id =  req.params.lecture_id;
+  var sql = "SELECT * FROM lecture_status WHERE user_id="  + mysql.escape(user_id) + " AND lecture_id="+ mysql.escape(lecture_id);
+  mysqlConnection.query(sql, function(err, row) {
+    if(err){
+      res.status(500).send({ error: err })
+    }
+    else{
+      //res.status(200).send(result);
+	  if(row)
+	  {
+		 res.status(500).send({ error: 'row already exits' }) 
+	  }
+	  else{
+		  var time_status = req.body.time_status;
+		  var completed_lecture = req.body.completed_lecture || false;
+		  var value    = [[lecture_id, user_id, completed_lecture, time_status]];
+	  }
+    }
+  })
+});
 
-  if(!user_id){
-    console.log("Invalid insert, user id cannot be empty");
-    res.status(500).send({ error: 'Invalid insert, user id cannot be empty' })
-  }
-  else if(!lecture_id){
-    res.status(500).send({ error: 'Invalid insert,lecture id cannot be empty' })
+  if(!user_id && !lecture_id){
+    console.log("Invalid insert, user id and lecture id cannot be empty");
+    res.status(500).send({ error: 'Invalid insert, user id and lecture id cannot be empty' })
   }
   else{
     var value    = [[lecture_id, user_id, completed_lecture, time_status]];

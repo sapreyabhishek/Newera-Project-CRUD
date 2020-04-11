@@ -5,7 +5,7 @@ var mysqlConnection = require('../connection');
 
 // create Live Classes table
 router.get('/create-live-classes-table', (req, res) => {
-    let sql = "CREATE TABLE live_classes(live_lecture_id INT AUTO_INCREMENT PRIMARY KEY, subject_id INT NOT NULL, live_lecture_name TEXT, live_lecture_Topic TEXT,  live_lecture_description TEXT, live_lecture_url TEXT NOT NULL, live_lecture_APPLICATION_ID TEXT NOT NULL, live_lecture_API_KEY TEXT NOT NULL, live_video_link TEXT, starting_time TIME, ending_time TIME, subscription tinyint default 0, hide tinyint default 0, priority int default 0, hacker_name TEXT, hacker_image TEXT, FOREIGN KEY (subject_id) REFERENCES subject(subject_id))"
+    let sql = "CREATE TABLE live_classes(live_lecture_id INT AUTO_INCREMENT PRIMARY KEY, subject_id INT NOT NULL, live_lecture_name TEXT, live_lecture_Topic TEXT,  live_lecture_description TEXT, live_lecture_url TEXT NOT NULL, live_video_link TEXT, starting_time TIME, ending_time TIME, subscription tinyint default 0, hide tinyint default 0, priority int default 0, hacker_name TEXT, hacker_image TEXT, FOREIGN KEY (subject_id) REFERENCES subject(subject_id))"
     mysqlConnection.query(sql, (err, result) => {
       if(err)if(err) {
         console.log(err);
@@ -33,8 +33,6 @@ router.get('/create-live-classes-material-table', (req, res) => {
  // insert live-classes in the live-classes table by making a post request
  router.post('/insert-live-classes', (req, res) => {
    var live_lecture_url  = req.body.live_lecture_url;
-   var live_lecture_APPLICATION_ID  = req.body.live_lecture_APPLICATION_ID;
-   var live_lecture_API_KEY  = req.body.live_lecture_API_KEY;
    var subject_id = req.body.subject_id;
    var live_lecture_name = req.body.live_lecture_name || null;
    var live_lecture_Topic = req.body.live_lecture_Topic || null;
@@ -48,13 +46,13 @@ router.get('/create-live-classes-material-table', (req, res) => {
    var hacker_name = req.body.hacker_name || null;
    var hacker_image = req.body.hacker_image || null;
 
-   if(!live_lecture_url || !live_lecture_APPLICATION_ID || !live_lecture_API_KEY || !subject_id){
-     console.log("Invalid insert, live lecture url, live lecture APPLICATION_ID, subject_id or live lecture API KEY cannot be empty");
+   if(!live_lecture_url || !subject_id){
+     console.log("Invalid insert, live lecture url or subject_id cannot be empty");
      res.status(500).send({ error: 'Compulsary filed cannot be empty' })
    }
    else{
-     var value    = [[subject_id, live_lecture_name, live_lecture_Topic, live_lecture_description, live_lecture_url, live_lecture_APPLICATION_ID, live_lecture_API_KEY, live_video_link, starting_time, ending_time, subscription, hide, priority, hacker_name, hacker_image]];
-     let sql = "INSERT INTO live_classes (subject_id, live_lecture_name, live_lecture_Topic, live_lecture_description, live_lecture_url, live_lecture_APPLICATION_ID, live_lecture_API_KEY, live_video_link, starting_time, ending_time, subscription, hide, priority, hacker_name, hacker_image) VALUES ?"
+     var value    = [[subject_id, live_lecture_name, live_lecture_Topic, live_lecture_description, live_lecture_url, live_video_link, starting_time, ending_time, subscription, hide, priority, hacker_name, hacker_image]];
+     let sql = "INSERT INTO live_classes (subject_id, live_lecture_name, live_lecture_Topic, live_lecture_description, live_lecture_url, live_video_link, starting_time, ending_time, subscription, hide, priority, hacker_name, hacker_image) VALUES ?"
      mysqlConnection.query(sql, [value] , (err, result) => {
         if(err) {
             console.log(err);
@@ -240,27 +238,7 @@ router.put('/update-live-classes/:id', function(req, res) {
        }
     })
    }
-   
-   if(req.body.live_lecture_APPLICATION_ID){
-    let sql = "UPDATE live_classes SET live_lecture_APPLICATION_ID=" + mysql.escape(req.body.live_lecture_APPLICATION_ID) + " WHERE live_lecture_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating lecture APPLICATION ID into live classes table' })
-       }
-    })
-   }
-   
-   if(req.body.live_lecture_API_KEY){
-    let sql = "UPDATE live_classes SET live_lecture_API_KEY=" + mysql.escape(req.body.live_lecture_API_KEY) + " WHERE live_lecture_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating lecture API KEY into live classes table' })
-       }
-    })
-   }
-   
+
    if(req.body.live_video_link){
     let sql = "UPDATE live_classes SET live_video_link=" + mysql.escape(req.body.live_video_link) + " WHERE live_lecture_id=" + mysql.escape(req.params.id);
     mysqlConnection.query(sql, (err, result) => {

@@ -356,7 +356,7 @@ router.post('/insert-lecture-status', (req, res)=>{
     }
   })
 });
-
+/*
   if(!user_id && !lecture_id){
     console.log("Invalid insert, user id and lecture id cannot be empty");
     res.status(500).send({ error: 'Invalid insert, user id and lecture id cannot be empty' })
@@ -374,6 +374,7 @@ router.post('/insert-lecture-status', (req, res)=>{
     });
   }
 });
+*/
 
 // Fetch a particular user from lecture status table
 router.get('/fetch-lecture-status/:id', function(req, res) {

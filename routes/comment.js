@@ -7,11 +7,12 @@ var mysqlConnection = require('../connection');
 router.get('/create-comment-table', (req, res) => {
     let sql = "CREATE TABLE comment(comment_id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, topic_id INT NOT NULL, comment TEXT, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (topic_id) REFERENCES topic(topic_id), FOREIGN KEY (user_id) REFERENCES user(user_id))"
     mysqlConnection.query(sql, (err, result) => {
-    if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in creating comment table' })
-    }
-    res.send(result);
+      if(err){
+        res.status(202).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
     })
  });
 
@@ -22,17 +23,18 @@ router.post('/insert-comment', (req, res) => {
     var comment  = req.body.comment || null;
     if(!user_id || !topic_id){
       console.log("Invalid insert, user id or topic id field cannot be empty");
-      res.status(500).send({ error: 'Compulsary field cannot be empty' })
+      res.status(202).send({ error: 'Compulsary field cannot be empty' })
     }
     else{
       var value = [[user_id, topic_id, comment]];
       let sql = "INSERT INTO comment (user_id, topic_id, comment) VALUES ?"
       mysqlConnection.query(sql, [value] , (err, result) => {
-      if(err){
-        console.log(err);
-        res.status(500).send({ error: 'Error in inserting comment into comment table' })
-      }
-      res.send(result);
+        if(err){
+          res.status(202).send({ error: err })
+        }
+        else{
+          res.status(200).send(result);
+        }
       })
     }
    });
@@ -41,23 +43,26 @@ router.post('/insert-comment', (req, res) => {
 router.get('/fetch-comments', (req, res) => {
     let sql = "SELECT * FROM comment"
     mysqlConnection.query(sql , (err, result) => {
-        if(err){
-            console.log(err);
-            res.status(500).send({ error: 'Error in fetching data from comment table' })
-        }
-        res.send(result);
-      })
+      if(err){
+        res.status(202).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
+    })
   });
 
 // Fetch a particular id from the comment table
 router.get('/fetch-comment/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM comment WHERE comment_id="  + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch a particular comment' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
@@ -65,11 +70,13 @@ router.get('/fetch-comment/:id', function(req, res) {
 router.get('/fetch-comment-by-userid/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM comment WHERE user_id="  + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch set of comments from a particular user' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
@@ -77,11 +84,13 @@ router.get('/fetch-comment-by-userid/:id', function(req, res) {
 router.get('/fetch-comment-by-topicid/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM comment WHERE topic_id="  + mysql.escape(id);
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch set of comments from a particular topic' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
@@ -91,12 +100,17 @@ router.put('/update-comment/:id', function(req, res) {
       let sql = "UPDATE comment SET comment=" + mysql.escape(req.body.comment) + " WHERE comment_id=" + mysql.escape(req.params.id);
       mysqlConnection.query(sql, (err, result) => {
          if(err) {
-             console.log(err);
-             res.status(500).send({ error: 'Error in updating comment into comment table' })
+             res.status(202).send({ error: 'Error in updating comment into comment table' })
+         }
+         else{
+          res.send({success: 'Updating the course table is successful'});
          }
       })
     }
-    res.send({success: 'Updating the course table is successful'});
-   });
+    else{
+      res.send({error : 'No updatation'});
+    }
+    
+  });
 
  module.exports = router;

@@ -19,7 +19,7 @@ router.get('/create-update-table', (req, res) => {
 
  // create Update response table
 router.get('/create-update-response-table', (req, res) => {
-  let sql = "CREATE TABLE update_response(update_response_id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, update_id INT NOT NULL, message text, FOREIGN KEY (user_id) REFERENCES user(user_id), FOREIGN KEY (update_id) REFERENCES _update(update_id))"
+  let sql = "CREATE TABLE update_response(update_response_id INT AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(128) NOT NULL, update_id INT NOT NULL, message text, FOREIGN KEY (user_id) REFERENCES user(user_id), FOREIGN KEY (update_id) REFERENCES _update(update_id))"
   mysqlConnection.query(sql, (err, result) => {
     if(err)if(err) {
       console.log(err);

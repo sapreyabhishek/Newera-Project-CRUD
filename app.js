@@ -28,6 +28,7 @@ var questionRoutes = require("./routes/question_bank");
 var userRoutes     = require("./routes/user");
 var lectureRoutes  = require("./routes/lecture");
 var commentRoutes  = require("./routes/comment");
+var updatesRoutes  = require("./routes/update");
 var live_classesRoutes = require("./routes/live_classes");
 var testseriesRoutes = require("./routes/testseries");
 
@@ -35,6 +36,7 @@ app.use("/", indexRoutes);
 app.use("/lecture", lectureRoutes);
 app.use("/question", questionRoutes);
 app.use("/user", userRoutes);
+app.use("/update", updatesRoutes);
 app.use("/comment", commentRoutes);
 app.use("/live_classes", live_classesRoutes);
 app.use("/testseries", testseriesRoutes);

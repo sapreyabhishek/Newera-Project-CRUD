@@ -556,9 +556,8 @@ router.put('/update-topic/:id', function(req, res) {
       }
     })
   }
-
   res.send({success: 'Updating the topic table is successful'});
-  });
+});
 
 // delete a particular course from the course table
 router.delete('/delete-course/:id', function(req, res, next) {

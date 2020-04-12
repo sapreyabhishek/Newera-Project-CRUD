@@ -7,12 +7,12 @@ var mysqlConnection = require('../connection');
 router.get('/create-update-table', (req, res) => {
     let sql = "CREATE TABLE _update(update_id INT AUTO_INCREMENT PRIMARY KEY, update_topic TEXT, update_description TEXT, update_video_link TEXT NOT NULL, update_image_link TEXT NOT NULL, hide tinyint default 0, priority int default 0)"
     mysqlConnection.query(sql, (err, result) => {
-      if(err)if(err) {
-        console.log(err);
-        res.status(500).send({ error: 'Error in creating update table in sql' })
+      if(err){
+        res.status(202).send({ error: err })
       }
-      console.log(result);
-      res.send(result);
+      else{
+        res.status(200).send(result);
+      }
     })
  });
  
@@ -21,12 +21,12 @@ router.get('/create-update-table', (req, res) => {
 router.get('/create-update-response-table', (req, res) => {
   let sql = "CREATE TABLE update_response(update_response_id INT AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(128) NOT NULL, update_id INT NOT NULL, message text, FOREIGN KEY (user_id) REFERENCES user(user_id), FOREIGN KEY (update_id) REFERENCES _update(update_id))"
   mysqlConnection.query(sql, (err, result) => {
-    if(err)if(err) {
-      console.log(err);
-      res.status(500).send({ error: 'Error in creating update response table in sql' })
+    if(err){
+      res.status(202).send({ error: err })
     }
-    console.log(result);
-    res.send(result);
+    else{
+      res.status(200).send(result);
+    }
   })
 });
 
@@ -47,12 +47,12 @@ router.get('/create-update-response-table', (req, res) => {
      var value    = [[update_topic, update_description, update_video_link, update_image_link, priority, hide]];
      let sql = "INSERT INTO _update (update_topic, update_description, update_video_link, update_image_link, hide, priority) VALUES ?"
      mysqlConnection.query(sql, [value] , (err, result) => {
-        if(err) {
-            console.log(err);
-            res.status(500).send({ error: 'Error in inserting data into update table' })
-        }
-       console.log(result);
-       res.send(result);
+      if(err){
+        res.status(202).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
      })
    }
   });
@@ -71,12 +71,12 @@ router.get('/create-update-response-table', (req, res) => {
     var value    = [[user_id, update_id, message]];
     let sql = "INSERT INTO update_response (user_id, update_id, message) VALUES ?"
     mysqlConnection.query(sql, [value] , (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in inserting data into update response table' })
-       }
-      console.log(result);
-      res.send(result);
+      if(err){
+        res.status(202).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
     })
   }
  });
@@ -85,35 +85,39 @@ router.get('/create-update-response-table', (req, res) => {
 router.get('/fetch-all-update-table', (req, res) => {
     let sql = "SELECT * FROM _update"
     mysqlConnection.query(sql , (err, result) => {
-        if(err){
-            console.log(err);
-            res.status(500).send({ error: 'Error in fetching all data from update table' })
-        }
-        res.send(result);
-      })
+      if(err){
+        res.status(202).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
   });
+});
 
 // Fetch the entire table of the update table where hide 0
 router.get('/fetch-update-table', (req, res) => {
     let sql = "SELECT * FROM _update WHERE hide = 0 ORDER BY priority"
     mysqlConnection.query(sql , (err, result) => {
-        if(err){
-            console.log(err);
-            res.status(500).send({ error: 'Error in fetching data from update table' })
-        }
-        res.send(result);
-      })
+      if(err){
+        res.status(202).send({ error: err })
+      }
+      else{
+        res.status(200).send(result);
+      }
+    });
   });
  
  // Fetch a particular id from the update table
 router.get('/fetch-update-table/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM _update WHERE update_id="  + mysql.escape(id) + " AND hide = 0 ORDER BY priority";
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch a particular update id value' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
@@ -121,23 +125,26 @@ router.get('/fetch-update-table/:id', function(req, res) {
 router.get('/fetch-update-response', (req, res) => {
   let sql = "SELECT * FROM update_response"
   mysqlConnection.query(sql , (err, result) => {
-      if(err){
-          console.log(err);
-          res.status(500).send({ error: 'Error in fetching data from update-response table' })
-      }
-      res.send(result);
-    })
+    if(err){
+      res.status(202).send({ error: err })
+    }
+    else{
+      res.status(200).send(result);
+    }
+  })
 });
 
  // Fetch a particular id from the update response table
 router.get('/fetch-update-response/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM update_response WHERE update_response_id="  + mysql.escape(id) ;
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch a particular update response' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
@@ -145,11 +152,13 @@ router.get('/fetch-update-response/:id', function(req, res) {
 router.get('/fetch-update-response-by-userid/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM update_response WHERE user_id="  + mysql.escape(id) ;
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch a particular update response by user id' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
@@ -157,144 +166,113 @@ router.get('/fetch-update-response-by-userid/:id', function(req, res) {
 router.get('/fetch-update-response-by-updateid/:id', function(req, res) {
     var id = req.params.id;
     var sql = "SELECT * FROM update_response WHERE update_id="  + mysql.escape(id) ;
-    mysqlConnection.query(sql, function(err, row, fields) {
-      if(err) {
-        res.status(500).send({ error: 'Cannot fetch a particular update response by update id' })
+    mysqlConnection.query(sql, function(err, result) {
+      if(err){
+        res.status(202).send({ error: err })
       }
-      res.send(row)
+      else{
+        res.status(200).send(result);
+      }
     })
 });
 
 // update a particular update from the update table
 router.put('/update-update-table/:id', function(req, res) {
-   if(req.body.update_topic){
-     let sql = "UPDATE _update SET update_topic=" + mysql.escape(req.body.update_topic) + " WHERE update_id=" + mysql.escape(req.params.id);
-     mysqlConnection.query(sql, (err, result) => {
-        if(err) {
-            console.log(err);
-            res.status(500).send({ error: 'Error in updating topic into update table' })
-        }
-     })
-   }
-   if(req.body.update_description){
-    let sql = "UPDATE _update SET update_description=" + mysql.escape(req.body.update_description) + " WHERE update_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating description into update table' })
-       }
-    })
-   }
-   
-   if(req.body.update_video_link){
-    let sql = "UPDATE _update SET update_video_link=" + mysql.escape(req.body.update_video_link) + " WHERE update_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating video link into update table' })
-       }
-    })
-   }
+  var id = req.params.id;
+  var sql = "SELECT * FROM _update WHERE update_id = ?"
+  mysqlConnection.query(sql, [id], function(err, result) {
+    if(err) {
+      res.status(500).send({ error: err })
+    }
+    else{
+      if(result.length !=0){
+          var update_topic       = req.body.update_topic       || result[0].update_topic;
+          var update_description = req.body.update_description || result[0].update_description;
+          var update_video_link  = req.body.update_video_link  || result[0].update_video_link;
+          var priority           = req.body.priority           || result[0].priority;
+          var hide               = req.body.hide               || result[0].hide;
+          var update_image_link  = req.body.update_image_link  || result[0].update_image_link;
 
-   if(req.body.update_image_link){
-    let sql = "UPDATE _update SET update_image_link=" + mysql.escape(req.body.update_image_link) + " WHERE update_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating image link into update table' })
-       }
-    })
-   }
-
-   if(req.body.priority){
-    let sql = "UPDATE _update SET priority=" + mysql.escape(req.body.priority) + " WHERE update_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating priority into update table' })
-       }
-    })
-   }
-
-   if(req.body.hide){
-    let sql = "UPDATE _update SET hide=" + mysql.escape(req.body.hide) + " WHERE update_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating hide into update table' })
-       }
-    })
-   }
-   res.send({success: 'Updating the update table is successful'});
-  });
+          let sql2 = "UPDATE _update SET update_topic = ?, update_description = ?, update_video_link = ?,update_image_link = ?, priority =?, hide = ? WHERE update_id = ?"
+          mysqlConnection.query(sql2, [update_topic, update_description, update_video_link, update_image_link, priority, hide, id], (err2, result2) => {
+              if(err2) {
+                  res.status(202).send({ error: err2 })
+              }
+              else{
+                  res.status(200).send({success : "Table was succesfully updated."});
+              }
+          });
+      }
+      else{
+          res.status(400).send({error : "No update id exits."});
+      }
+    }
+  }); 
+});
 
 // update a particular response from the update-response table
 router.put('/update-update-response/:id', function(req, res) {
-  if(req.body.user_id){
-    let sql = "UPDATE update_response SET user_id=" + mysql.escape(req.body.user_id) + " WHERE update_response_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating user id into update response table' })
-       }
-    })
-  }
+  var id = req.params.id;
+  var sql = "SELECT * FROM update_response WHERE update_response_id = ?"
+  mysqlConnection.query(sql, [id], function(err, result) {
+    if(err) {
+      res.status(500).send({ error: err })
+    }
+    else{
+      if(result.length !=0){
+          var user_id   = req.body.user_id   || result[0].user_id;
+          var update_id = req.body.update_id || result[0].update_id;
+          var message   = req.body.message   || result[0].message;
 
-  if(req.body.update_id){
-    let sql = "UPDATE update_response SET update_id=" + mysql.escape(req.body.update_id) + " WHERE update_response_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating update id into update response table' })
-       }
-    })
-  }
-  
-  if(req.body.message){
-    let sql = "UPDATE update_response SET message=" + mysql.escape(req.body.message) + " WHERE update_response_id=" + mysql.escape(req.params.id);
-    mysqlConnection.query(sql, (err, result) => {
-       if(err) {
-           console.log(err);
-           res.status(500).send({ error: 'Error in updating message into update response table' })
-       }
-    })
-  }
-  
-  res.send({success: 'Updating the update response table is successful'});
- });
+          let sql2 = "UPDATE update_response SET user_id = ?, update_id = ?, message = ? WHERE update_response_id = ?"
+          mysqlConnection.query(sql2, [user_id, update_id, message, id], (err2, result2) => {
+              if(err2) {
+                  res.status(202).send({ error: err2 })
+              }
+              else{
+                  res.status(200).send({success : "Table was succesfully updated."});
+              }
+          });
+      }
+      else{
+          res.status(400).send({error : "No update response id exits."});
+      }
+    }
+  }); 
+});
 
 // delete a particular update from the update table
 router.delete('/delete-update-table/:id', function(req, res, next) {
   var id = req.params.id;
-  var sql1 = "DELETE FROM update_response WHERE update_id=" + mysql.escape(id);
-  mysqlConnection.query(sql1, function(err, result) {
+  var sql = "DELETE FROM update_response WHERE update_id=" + mysql.escape(id);
+  mysqlConnection.query(sql, function(err, result) {
     if(err) {
-      res.status(500).send({ error: 'Error in deleting all update response from a particular update id' })
+      res.status(500).send({ error: err })
     }
-            else{
-              var sql3 = "DELETE FROM _update WHERE update_id =" + mysql.escape(id);
-              mysqlConnection.query(sql3, function(err4, result) {
-                if(err4)  {
-                  console.log(err);
-                  res.status(500).send({ error: 'Error in deleting a update from update table' })
-                }
-                res.send({'status': 'success'})
-              })
-            }
-          });
-        });
+    else{
+      var sql2 = "DELETE FROM _update WHERE update_id =" + mysql.escape(id);
+      mysqlConnection.query(sql2, function(err2, result2) {
+        if(err2){
+          res.status(202).send({ error: err2 })
+        }
+        else{
+          res.status(200).send(result2);
+        }
+      })
+    }
+  });
+});
 
 // delete a particular response from the update-response table
 router.delete('/delete-update-response/:id', function(req, res, next) {
   var id = req.params.id;
-  var sql3 = "DELETE FROM update_response WHERE update_response_id=" + mysql.escape(id);
-  mysqlConnection.query(sql3, function(err, result) {
-    if(err)  {
-      console.log(err);
-      res.status(500).send({ error: 'Error in deleting a response from update response table' })
+  var sql = "DELETE FROM update_response WHERE update_response_id=" + mysql.escape(id);
+  mysqlConnection.query(sql, function(err, result) {
+    if(err){
+      res.status(202).send({ error: err })
     }
     else{
-      res.send({'status': 'success'});
+      res.status(200).send(result);
     }
   });
 });

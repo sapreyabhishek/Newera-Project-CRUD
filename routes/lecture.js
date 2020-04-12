@@ -422,7 +422,7 @@ router.post('/update-lecture-status/:user_id/:lecture_id', function(req, res) {
           var time_status       = req.body.time_status       || result[0].time_status;
 
           let sql2 = "UPDATE lecture_status SET completed_lecture = ?, time_status = ? WHERE lecture_id= ? AND user_id= ?"
-          mysqlConnection.query(sql2, [completed_lecture, time_status, id], (err2, result2) => {
+          mysqlConnection.query(sql2, [completed_lecture, time_status, lecture_id, user_id], (err2, result2) => {
               if(err2) {
                   res.status(500).send({ error: err2 })
               }
